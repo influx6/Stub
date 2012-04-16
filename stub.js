@@ -3,33 +3,28 @@
 var Stub=(function(){
     
     var mixer = function(client,server){
-	for(var e in server){
-	    client[e] = server[e];
-	}
+		for(var e in server){
+	    	client[e] = server[e];
+		}
     };
 
-    var class_methods = {
-
-	inherit: function(parent){
+	var inherit = function(child,parent){
+		if(typeof child !== "function"  && typeof child !== "object"){
+			throw new Error("first argument given is not an object or function!");
+		}
 		if(typeof parent !== "function"  && typeof parent !== "object"){
-			throw new Error("argument given is not an object or function!");
+			throw new Error("second argument given is not an object or function!");
 		}
 		
-		if(!this.prototype._super){
-	    		var pro = parent.prototype;
-	    		var self = this.prototype;
-	    		self._super = pro;
-	    
-	    		for(var e in pro){
-				if(!self[e]){    
-		    		self[e] = pro[e];
-				}
-	    		}
-	    	return true; 
-	    }
-	    
-	    return false;
-	},
+		child.prototype = new parent;
+		child.prototype.constructor = child;
+	    child.parent = parent.prototype;
+	
+		parent.prototype.construtor = parent;
+				
+	};
+
+    var class_methods = {
 	
 	extend: function(ability){
 	    if(typeof ability !== 'object'){
@@ -194,28 +189,33 @@ var Stub=(function(){
     };
 
     return {
-    
+    inherit: inherit,
     map: proto_methods.map,
     isObjectType: proto_methods.isObjectType,
 	onEach: proto_methods.onEach,
 	
-	create: function(ability){
+	create: function(ability,parent){
 	    
 	    function Stub(){
 	    	this.events={
 				'nameSpace':{},
 				'eventSpace':{}
 			};
-	
-		if(this._super){
-		    this._super.constructor.call(this);
-		}
-		if(this.initialize){
-		    this.initialize.apply(this,arguments);
-		}
+			
+			if(Stub.parent){
+				Stub.parent.constructor.apply(this,arguments);
+				this._super = Stub.parent;
+			}
+			if(this.initialize){
+		    	this.initialize.apply(this,arguments);
+			}
 	    };
-	    
-	    mixer(Stub,class_methods);
+	    		
+		if(parent){
+			inherit(Stub,parent);
+		};
+		
+		mixer(Stub,class_methods);
 	    mixer(Stub.prototype,proto_methods);
 
 	    Stub.prototype.constructor = Stub;
@@ -223,9 +223,9 @@ var Stub=(function(){
 	    Stub.fn.initialize = function(){};
 	    
 	    if(ability){
-		if(ability['extend']){ Stub.extend(ability.extend) };
-		if(ability['include']){ Stub.include(ability.include) };
-		if(!ability['extend'] && !ability['include']){ Stub.include(ability) };
+			if(ability['extend']){ Stub.extend(ability.extend) };
+			if(ability['include']){ Stub.include(ability.include) };
+			if(!ability['extend'] && !ability['include']){ Stub.include(ability) };
 	    }
 		
 		Stub.proxy = Stub.fn.proxy;
