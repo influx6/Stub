@@ -42,3 +42,6 @@ var Library = Stub.create({
 	
 }, Catalogue);
 
+
+var NewYork_National = new Library({ name:"NewYork National", size:3000});
+var Manhantan_National = new Library({ name:"Manhantan National", size:3000});
