@@ -184,7 +184,13 @@ var Stub=(function(){
 		list.eventSpace ={};
 	},
 	
-	proxy: function(){}
+	proxy: function(fn){
+		var self=this;
+		
+		return (function(){
+			fn.call(self,arguments);
+		});
+	}
     };
 
     return {
@@ -221,7 +227,8 @@ var Stub=(function(){
 		if(ability['include']){ Stub.include(ability.include) };
 		if(!ability['extend'] && !ability['include']){ Stub.include(ability) };
 	    }
-	
+		
+		Stub.proxy = Stub.fn.proxy;
 	    return Stub;
 	}
     };
