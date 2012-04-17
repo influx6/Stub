@@ -155,7 +155,8 @@
 
 	triggerEvent: function(event,arg){
 		var list = this.events;
-				
+		if(!list.eventSpace[event]) return;
+			
 		var e = list.eventSpace[event];
 		this.onEach(e,function(o,b){
 			list.nameSpace[o].apply(this,arg || []);
