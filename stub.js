@@ -185,7 +185,15 @@
 		return (function(){
 			fn.call(self,arguments);
 		});
+	},
+	
+	superCall: function(method){
+		var self = this;
+		if(self[method]){
+			self[method].apply(this,arguments);
+		}
 	}
+	
     };
 
     return {
@@ -209,6 +217,7 @@
 			if(Stub.parent){
 				Stub.parent.constructor.apply(this,arguments);
 				this._super = Stub.parent;
+				this.className=objectname;
 			}
 			if(this.initialize){
 		    	this.initialize.apply(this,arguments);
