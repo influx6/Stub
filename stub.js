@@ -194,15 +194,13 @@
     isObjectType: proto_methods.isObjectType,
 	onEach: proto_methods.onEach,
 	
-	create: function(name,ability,parent){
-	    if(!name){
-			throw new Error("Class Name is not giving!");
-		}
-		var name=name;
-	
+	create: function(objectname,ability,parent){
+		if(!objectname || typeof objectname !== "string"){ 
+			throw new Error("First argument must be the name of the class!")
+		};
+		
 	    function Stub(){
-			
-			this.className=name;
+			this.className = objectname;
 	    	this.events={
 				'nameSpace':{},
 				'eventSpace':{}
