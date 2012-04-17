@@ -187,7 +187,7 @@
 		});
 	},
 	
-	superCall: function(method){
+	trigger: function(method){
 		var self = this;
 		if(self[method]){
 			self[method].apply(this,arguments);

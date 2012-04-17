@@ -37,7 +37,7 @@ var Library = Stub.create("Library",{
 	getBooks: function(){},
 	
 	getCatalogues: function(){
-		this._super.superCall('getCatalogues',arguments);
+		this._super.trigger('getCatalogues',arguments);
 	}
 	
 }, Catalogue);
