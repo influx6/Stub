@@ -1,6 +1,6 @@
 //a simple example class using Stub,a Simple library
 
-var Catalogue = Stub.create({
+var Catalogue = Stub.create("Catalogue",{
 	
 	initialize: function(){
 		this.catalogue=[];
@@ -24,7 +24,7 @@ var Catalogue = Stub.create({
 	
 });
 
-var Library = Stub.create({
+var Library = Stub.create("Library",{
 	initialize: function(settings){
 		this.settings = settings;
 		this.bookLists=[];

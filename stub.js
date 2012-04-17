@@ -1,6 +1,6 @@
 //simple class system
 
-var Stub=(function(){
+;var Stub=(function(){
     
     var mixer = function(client,server){
 		for(var e in server){
@@ -194,9 +194,15 @@ var Stub=(function(){
     isObjectType: proto_methods.isObjectType,
 	onEach: proto_methods.onEach,
 	
-	create: function(ability,parent){
-	    
+	create: function(name,ability,parent){
+	    if(!name){
+			throw new Error("Class Name is not giving!");
+		}
+		var name=name;
+	
 	    function Stub(){
+			
+			this.className=name;
 	    	this.events={
 				'nameSpace':{},
 				'eventSpace':{}
