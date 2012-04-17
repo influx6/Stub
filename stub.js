@@ -153,7 +153,7 @@
 		
 	},
 
-	triggerEvent: function(event,name,arg){
+	triggerEvent: function(event,arg){
 		var list = this.events;
 				
 		var e = list.eventSpace[event];
