@@ -1,0 +1,34 @@
+var b = 'div#logger'
+undefined
+var c = 'div.logger'
+undefined
+b.match(/(\w)/)
+["d", "d"]
+b.match(/(\w+)/)
+["div", "div"]
+b.match(/(\w+)?/)
+["div", "div"]
+b.match(/(\w+)?#(\w+)/)
+["div#logger", "div", "logger"]
+b.match(/(\w+)?(\W\w+)/)
+["div#logger", "div", "#logger"]
+b.match(/(\w+)?(#\w+)/)
+["div#logger", "div", "#logger"]
+c.match(/(\w+)?(#\w+)/)
+null
+c.match(/(\w+)?(\W\w+)/)
+["div.logger", "div", ".logger"]
+g='div.logger div.booger div.jugger'
+"div.logger div.booger div.jugger"
+g.match(/(\w+)?(\W\w+)/)
+["div.logger", "div", ".logger"]
+g.match(/(\w+)?(\W\w+)\s/)
+["div.logger ", "div", ".logger"]
+g.match(/(\w+)?(\W\w+)\s(\w+)/)
+["div.logger div", "div", ".logger", "div"]
+g.match(/(\w+)?(\W\w+)\s([\W\w]+)/)
+["div.logger div.booger div.jugger", "div", ".logger", "div.booger div.jugger"]
+
+//old match .match(/(^[\w]+)(\W[\w-_]+)[\s]?([\w\W]+)?/)
+
+var b='div.log div.guller'; var g='.log .logger';

@@ -7,7 +7,7 @@
 	    	client[e] = server[e];
 		}
     };
-
+	
 	var inherit = function(child,parent){
 		if(typeof child !== "function"  && typeof child !== "object"){
 			throw new Error("first argument given is not an object or function!");
@@ -25,6 +25,19 @@
 	};
 
     var class_methods = {
+	
+	share: function(obj,set){
+		var protto = obj.prototype;
+		
+		var proto_self = this.prototype;
+		
+		for(var i = 0; i < set.length; i++){
+			var c = set[i];
+			if(!protto[c]){
+				protto[c] =  proto_self[c];
+			}
+		}
+	},
 	
 	extend: function(ability){
 	    if(typeof ability !== 'object'){
@@ -52,20 +65,15 @@
 
     var proto_methods = {
 	
-	map: function(obj,callback){
-	    var result = [],self=this;
-	    
-	    if(!obj.each){
-		self.onEach(obj,function(o,b){
-		    result.push(callback.call(this,o));
-		});
+	map: function(obj,callback,scope){
+	    var result = [];
+		if(!scope){ scope = this; }
+		
+		this.onEach(obj,function(o,b,i){
+			var r = callback.call(scope,o,b,i);
+			if(r) result.push(r);
+		},scope);
 		return result;
-	    }else{
-	        obj.each(function(){
-		     result.push(callback.call(this,o));
-		});
-		return result;
-	    }
 	},
 
 	each: function(callback){
@@ -78,21 +86,26 @@
 	onEach: function(obj,callback,scope){
 		var scoped=scope;
 		if(!scope){ scoped = this; }
-	    if(this.isObjectType(obj,'array') || this.isObjectType(obj,'string')){
-		for(var i=0; i < obj.length; i++){
-		    callback.call(scoped,obj[i],obj,i);
-		}
-		return;
+		
+	    if('length' in obj || this.isObjectType(obj,"array") || this.isObjectType(obj,"string")){
+			for(var i=0; i < obj.length; i++){
+		    	callback.call(scoped,obj[i],obj,i);
+			}
+			return;
 	    }
 
-	    if(this.isObjectType(obj,'object')){
-		for(var e in obj){
-		    callback.call(scoped,e,obj);
-		}
-		return;
+	    if(this.isObjectType(obj,'object') || typeof obj === "object"){
+			for(var e in obj){
+		    	callback.call(scoped,e,obj);
+			}
+			return;
 	    }
 	},
-
+	
+	getObjectType: function(obj){
+		return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase();
+	},
+	
 	objectType: function(){
 	    var self = this;
 	    return ({}).toString.call(self).match(/\s([\w]+)/)[1].toLowerCase();
@@ -182,10 +195,7 @@
 	
 	proxy: function(fn){
 		var self=this;
-		
-		return (function(){
-			fn.call(self,arguments);
-		});
+		return fn.apply(self,arguments);
 	},
 	
 	trigger: function(method){
@@ -200,6 +210,7 @@
     return {
     inherit: inherit,
     map: proto_methods.map,
+	getObjectType: proto_methods.getObjectType,
     isObjectType: proto_methods.isObjectType,
 	onEach: proto_methods.onEach,
 	
