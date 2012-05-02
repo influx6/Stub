@@ -37,7 +37,7 @@ var Library = Stubs.create("Library",{
 	getBooks: function(){},
 	
 	getCatalogues: function(){
-		this._super.trigger('getCatalogues',arguments);
+		return this._super.trigger('getCatalogues',arguments);
 	}
 	
 }, Catalogue);
@@ -46,7 +46,9 @@ var Library = Stubs.create("Library",{
 var NewYork_National = new Library({ name:"NewYork National", size:3000});
 var Manhantan_National = new Library({ name:"Manhantan National", size:3000});
 
-or 
+/* 
 
 var NewYork_National = Library({ name:"NewYork National", size:3000});
 var Manhantan_National = Library({ name:"Manhantan National", size:3000});
+
+*/

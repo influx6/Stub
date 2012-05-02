@@ -17,7 +17,7 @@ Stubs.inherit = function(child,parent){
 	child.prototype.constructor = child;
     child.parent = parent.prototype;
 
-	parent.prototype.construtor = parent;
+	parent.prototype.constructor = parent;
 };
 
 Stubs.share = function(obj,set){
@@ -47,22 +47,14 @@ Stubs.slugAbility = function(obj,ability){
 
 Stubs.create = function(classname,ability,parent){
 	var Block = function(){
-		if(!(this instanceof arguments.callee)){
-			var m = new arguments.callee;
-			m.init.apply(m,arguments);
-			return m;
+
+		if(Block.parent){
+			Block.parent.constructor.apply(this,arguments);
+			this._super = Block.parent;
 		}
-		
+			
 		if(this.init && typeof this.init == "function"){
 				this.init.apply(this,arguments);
-		}
-		
-		if(Block.parent){
-			this._super = Block.parent;
-			this._super.constructor.apply(this,arguments);
-			if(this._super.init && typeof this._super.init == "function"){
-				this._super.init.call(this);
-			}
 		}
 		
 	};
@@ -86,6 +78,11 @@ Stubs.create = function(classname,ability,parent){
 	Block.events = Block.prototype.events;
 	
 	return Block;
+};
+
+
+Stubs.extend = function(classname,ability){
+	
 };
 
 Stubs.prototype = {
