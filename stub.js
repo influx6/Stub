@@ -47,22 +47,14 @@ Stubs.slugAbility = function(obj,ability){
 
 Stubs.create = function(classname,ability,parent){
 	var Block = function(){
-		if(!(this instanceof arguments.callee)){
-			var m = new arguments.callee;
-			m.init.apply(m,arguments);
-			return m;
+
+		if(Block.parent){
+			Block.parent.constructor.apply(this,arguments);
+			this._super = Block.parent;	
 		}
 		
 		if(this.init && typeof this.init == "function"){
 				this.init.apply(this,arguments);
-		}
-		
-		if(Block.parent){
-			this._super = Block.parent;
-			this._super.constructor.apply(this,arguments);
-			if(this._super.init && typeof this._super.init == "function"){
-				this._super.init.call(this);
-			}
 		}
 		
 	};
@@ -244,64 +236,6 @@ Stubs.prototype = {
 			self[method].apply(this,arguments);
 		}
 	}
-<<<<<<< HEAD
-	
-    };
-
-    return {
-    inherit: inherit,
-    map: proto_methods.map,
-	getObjectType: proto_methods.getObjectType,
-    isObjectType: proto_methods.isObjectType,
-	onEach: proto_methods.onEach,
-	
-	create: function(objectname,ability,parent){
-		if(!objectname || typeof objectname !== "string"){ 
-			throw new Error("First argument must be the name of the class!")
-		};
-		
-	    function Stub(){
-			this.className = objectname;
-	    	this.events={
-				'nameSpace':{},
-				'eventSpace':{}
-			};
-			
-			
-			if(Stub.parent){
-				Stub.parent.constructor.apply(this,arguments);
-				this._super = Stub.parent;
-				this.className=objectname;
-			}
-			
-			if(typeof this.initialize == "function"){
-		    	this.initialize.apply(this,arguments);
-			}
-	    };
-	    		
-		if(parent){
-			inherit(Stub,parent);
-		};
-		
-		mixer(Stub,class_methods);
-	    mixer(Stub.prototype,proto_methods);
-
-	    Stub.prototype.constructor = Stub;
-	    Stub.fn = Stub.prototype;
-	    Stub.fn.initialize = function(){};
-	
-	    
-	    if(ability){
-			if(ability['extend']){ Stub.extend(ability.extend) };
-			if(ability['include']){ Stub.include(ability.include) };
-			if(!ability['extend'] && !ability['include']){ Stub.include(ability) };
-	    }
-		
-		Stub.proxy = Stub.fn.proxy;
-	    return Stub;
-	}
-    };
-=======
 };
 
 Stubs.proxy = Stubs.prototype.proxy;
@@ -309,5 +243,4 @@ Stubs.onEach = Stubs.prototype.onEach;
 Stubs.map =  Stubs.prototype.map;
 Stubs.getObjectType = Stubs.prototype.getObjectType;
 Stubs.isObjectType = Stubs.prototype.isObjectType;
->>>>>>> 0.0.2
 
