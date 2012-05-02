@@ -3,17 +3,8 @@ var Stubs = function(){};
 Stubs.version = "0.0.2";
 
 Stubs.inherit = function(child,parent){
-	if(typeof child !== "function"  && typeof child !== "object"){
-		throw new Error("first argument given is not an object or function!");
-	}
-	if(typeof parent !== "function"  && typeof parent !== "object"){
-		throw new Error("second argument given is not an object or function!");
-	}
 	
-	var empty = function(){};
-	empty.prototype = parent.prototype;
-	
-	child.prototype = new empty;
+	child.prototype = new parent;
 	child.prototype.constructor = child;
     child.parent = parent.prototype;
 
@@ -54,6 +45,9 @@ Stubs.create = function(classname,ability,parent){
 		}
 			
 		if(this.init && typeof this.init == "function"){
+				if(this._super){
+					this._super.init.apply(this,arguments);
+				}
 				this.init.apply(this,arguments);
 		}
 		

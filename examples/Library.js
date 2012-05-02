@@ -3,7 +3,7 @@
 var Catalogue = Stubs.create("Catalogue",{
 	
 	init: function(){
-		this.catalogue=[];
+		this.catalogue={};
 	},
 	 
 	addCatalogue: function(name,catalogue){
@@ -37,7 +37,8 @@ var Library = Stubs.create("Library",{
 	getBooks: function(){},
 	
 	getCatalogues: function(){
-		return this._super.trigger('getCatalogues',arguments);
+		this._super.trigger('getCatalogues');
+		return this._super.getCatalogues();
 	}
 	
 }, Catalogue);
