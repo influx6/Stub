@@ -1,69 +1,94 @@
-//simple class system
+var Stubs = function(){};
 
-;var Stub=(function(){
-    
-    var mixer = function(client,server){
-		for(var e in server){
-	    	client[e] = server[e];
-		}
-    };
-	
-	var inherit = function(child,parent){
-		if(typeof child !== "function"  && typeof child !== "object"){
-			throw new Error("first argument given is not an object or function!");
-		}
-		if(typeof parent !== "function"  && typeof parent !== "object"){
-			throw new Error("second argument given is not an object or function!");
-		}
-		
-		child.prototype = new parent;
-		child.prototype.constructor = child;
-	    child.parent = parent.prototype;
-	
-		parent.prototype.construtor = parent;
-				
-	};
+Stubs.version = "0.0.2";
 
-    var class_methods = {
+Stubs.inherit = function(child,parent){
+	if(typeof child !== "function"  && typeof child !== "object"){
+		throw new Error("first argument given is not an object or function!");
+	}
+	if(typeof parent !== "function"  && typeof parent !== "object"){
+		throw new Error("second argument given is not an object or function!");
+	}
 	
-	share: function(obj,set){
-		var protto = obj.prototype;
-		
-		var proto_self = this.prototype;
-		
-		for(var i = 0; i < set.length; i++){
-			var c = set[i];
-			if(!protto[c]){
-				protto[c] =  proto_self[c];
+	var empty = function(){};
+	empty.prototype = parent.prototype;
+	
+	child.prototype = new empty;
+	child.prototype.constructor = child;
+    child.parent = parent.prototype;
+
+	parent.prototype.construtor = parent;
+};
+
+Stubs.share = function(obj,set){
+	var client = obj.prototype;
+	var server = this.prototype;
+	
+	for(var i = 0; i < set.length; i++){
+		var c = set[i];
+		if(!client[c] && server[c]){
+			client[c] =  server[c];
+		}
+	}
+	
+};
+
+Stubs.slugAbility = function(obj,ability){
+	if(typeof ability !== 'object'){
+		throw new Error('Argument passed is not an Object!');
+    }
+    for(var e in ability){
+	    obj[e] = ability[e];
+    }
+    return;
+};
+
+
+
+Stubs.create = function(classname,ability,parent){
+	var Block = function(){
+		if(!(this instanceof arguments.callee)){
+			var m = new arguments.callee;
+			m.init.apply(m,arguments);
+			return m;
+		}else{
+			if(this.init && typeof this.init == "function"){
+				this.init.apply(this,arguments);
 			}
 		}
-	},
+		
+		if(Block.parent){
+			Block.parent.constructor.apply(this,arguments);
+			this._super = Block.parent;
+		}
+		
+	};
 	
-	extend: function(ability){
-	    if(typeof ability !== 'object'){
-		throw new Error('Argument passed is not an Object!');
-	    }
-	    var self = this;
-	    for(var e in ability){
-		    self[e] = ability[e];
-	    }
-	    return;
-	},
+	if(parent){ Stubs.inherit(Block,parent); }
 	
-	include: function(ability){
-	    if(typeof ability !== 'object'){
-		throw new Error('Argument passed is not an Object!');
-	    }
-	    var self = this.prototype;
-	    for(var e in ability){
-		    self[e] = ability[e];
-	    }
-	    return;
+	Stubs.slugAbility(Block.prototype,Stubs.prototype);
+	
+	if(!ability.include && !ability.extend){ 
+		Stubs.slugAbility(Block.prototype,ability);
+	}else{
+		if(ability.extend){ Stubs.slubAbility(Block,ability.extend); }
+		if(ability.include){ Stubs.slugAbility(Block.prototype,ability.include); }
+	}
+	
+	Block.className = Block.prototype.className = classname;
+	Block.fn = Block.prototype;
+	Block.events = Block.prototype.events;
+	
+	return Block;
+};
+
+Stubs.prototype = {
+	
+	
+	events : {
+		'nameSpace':{},
+		'eventSpace':{}
 	},
-
-    };
-
-    var proto_methods = {
 	
 	map: function(obj,callback,scope){
 	    var result = [];
@@ -202,7 +227,9 @@
 	
 	proxy: function(fn){
 		var self=this;
-		return fn.apply(self,arguments);
+		return function(){
+			return fn.apply(self,arguments);
+		};
 	},
 	
 	trigger: function(method){
@@ -211,6 +238,7 @@
 			self[method].apply(this,arguments);
 		}
 	}
+<<<<<<< HEAD
 	
     };
 
@@ -267,5 +295,13 @@
 	    return Stub;
 	}
     };
+=======
+};
 
-})();
+Stubs.proxy = Stubs.prototype.proxy;
+Stubs.onEach = Stubs.prototype.onEach;
+Stubs.map =  Stubs.prototype.map;
+Stubs.getObjectType = Stubs.prototype.getObjectType;
+Stubs.isObjectType = Stubs.prototype.isObjectType;
+>>>>>>> 0.0.2
+
