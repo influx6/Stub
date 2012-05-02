@@ -1,8 +1,8 @@
 //a simple example class using Stub,a Simple library
 
-var Catalogue = Stub.create("Catalogue",{
+var Catalogue = Stubs.create("Catalogue",{
 	
-	initialize: function(){
+	init: function(){
 		this.catalogue=[];
 	},
 	 
@@ -24,8 +24,8 @@ var Catalogue = Stub.create("Catalogue",{
 	
 });
 
-var Library = Stub.create("Library",{
-	initialize: function(settings){
+var Library = Stubs.create("Library",{
+	init: function(settings){
 		this.settings = settings;
 		this.bookLists=[];
 	},
@@ -45,3 +45,8 @@ var Library = Stub.create("Library",{
 
 var NewYork_National = new Library({ name:"NewYork National", size:3000});
 var Manhantan_National = new Library({ name:"Manhantan National", size:3000});
+
+or 
+
+var NewYork_National = Library({ name:"NewYork National", size:3000});
+var Manhantan_National = Library({ name:"Manhantan National", size:3000});
