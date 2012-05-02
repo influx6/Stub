@@ -226,6 +226,7 @@
 			throw new Error("First argument must be the name of the class!")
 		};
 		
+		
 	    function Stub(){
 			this.className = objectname;
 	    	this.events={
