@@ -51,15 +51,18 @@ Stubs.create = function(classname,ability,parent){
 			var m = new arguments.callee;
 			m.init.apply(m,arguments);
 			return m;
-		}else{
-			if(this.init && typeof this.init == "function"){
+		}
+		
+		if(this.init && typeof this.init == "function"){
 				this.init.apply(this,arguments);
-			}
 		}
 		
 		if(Block.parent){
-			Block.parent.constructor.apply(this,arguments);
 			this._super = Block.parent;
+			this._super.constructor.apply(this,arguments);
+			if(this._super.init && typeof this._super.init == "function"){
+				this._super.init.call(this);
+			}
 		}
 		
 	};
@@ -69,7 +72,6 @@ Stubs.create = function(classname,ability,parent){
 	
 	Block.prototype.init = function(){};
 	
-	Stubs.slugAbility(Block,Stubs);
 	Stubs.slugAbility(Block.prototype,this.prototype);
 	
 	if(!ability.include && !ability.extend){ 
