@@ -34,13 +34,13 @@ Stubs.share = function(obj,set){
 };
 
 Stubs.slugAbility = function(obj,ability){
-	if(typeof ability !== 'object'){
-		throw new Error('Argument passed is not an Object!');
-    }
-    for(var e in ability){
-	    obj[e] = ability[e];
+	if(typeof ability == 'object' || typeof ability == 'function'){
+		for(var e in ability){
+		    obj[e] = ability[e];
+	    }
     }
     return;
+    
 };
 
 
@@ -64,9 +64,13 @@ Stubs.create = function(classname,ability,parent){
 		
 	};
 	
+	
 	if(parent){ Stubs.inherit(Block,parent); }
 	
-	Stubs.slugAbility(Block.prototype,Stubs.prototype);
+	Block.prototype.init = function(){};
+	
+	Stubs.slugAbility(Block,Stubs);
+	Stubs.slugAbility(Block.prototype,this.prototype);
 	
 	if(!ability.include && !ability.extend){ 
 		Stubs.slugAbility(Block.prototype,ability);
