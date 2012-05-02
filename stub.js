@@ -1,69 +1,94 @@
-//simple class system
+var Stubs = function(){};
 
-;var Stub=(function(){
-    
-    var mixer = function(client,server){
-		for(var e in server){
-	    	client[e] = server[e];
-		}
-    };
-	
-	var inherit = function(child,parent){
-		if(typeof child !== "function"  && typeof child !== "object"){
-			throw new Error("first argument given is not an object or function!");
-		}
-		if(typeof parent !== "function"  && typeof parent !== "object"){
-			throw new Error("second argument given is not an object or function!");
-		}
-		
-		child.prototype = new parent;
-		child.prototype.constructor = child;
-	    child.parent = parent.prototype;
-	
-		parent.prototype.construtor = parent;
-				
-	};
+Stubs.version = "0.0.2";
 
-    var class_methods = {
+Stubs.inherit = function(child,parent){
+	if(typeof child !== "function"  && typeof child !== "object"){
+		throw new Error("first argument given is not an object or function!");
+	}
+	if(typeof parent !== "function"  && typeof parent !== "object"){
+		throw new Error("second argument given is not an object or function!");
+	}
 	
-	share: function(obj,set){
-		var protto = obj.prototype;
-		
-		var proto_self = this.prototype;
-		
-		for(var i = 0; i < set.length; i++){
-			var c = set[i];
-			if(!protto[c]){
-				protto[c] =  proto_self[c];
+	var empty = function(){};
+	empty.prototype = parent.prototype;
+	
+	child.prototype = new empty;
+	child.prototype.constructor = child;
+    child.parent = parent.prototype;
+
+	parent.prototype.construtor = parent;
+};
+
+Stubs.share = function(obj,set){
+	var client = obj.prototype;
+	var server = this.prototype;
+	
+	for(var i = 0; i < set.length; i++){
+		var c = set[i];
+		if(!client[c] && server[c]){
+			client[c] =  server[c];
+		}
+	}
+	
+};
+
+Stubs.slugAbility = function(obj,ability){
+	if(typeof ability !== 'object'){
+		throw new Error('Argument passed is not an Object!');
+    }
+    for(var e in ability){
+	    obj[e] = ability[e];
+    }
+    return;
+};
+
+
+
+Stubs.create = function(classname,ability,parent){
+	var Block = function(){
+		if(!(this instanceof arguments.callee)){
+			var m = new arguments.callee;
+			m.init.apply(m,arguments);
+			return m;
+		}else{
+			if(this.init && typeof this.init == "function"){
+				this.init.apply(this,arguments);
 			}
 		}
-	},
+		
+		if(Block.parent){
+			Block.parent.constructor.apply(this,arguments);
+			this._super = Block.parent;
+		}
+		
+	};
 	
-	extend: function(ability){
-	    if(typeof ability !== 'object'){
-		throw new Error('Argument passed is not an Object!');
-	    }
-	    var self = this;
-	    for(var e in ability){
-		    self[e] = ability[e];
-	    }
-	    return;
-	},
+	if(parent){ Stubs.inherit(Block,parent); }
 	
-	include: function(ability){
-	    if(typeof ability !== 'object'){
-		throw new Error('Argument passed is not an Object!');
-	    }
-	    var self = this.prototype;
-	    for(var e in ability){
-		    self[e] = ability[e];
-	    }
-	    return;
+	Stubs.slugAbility(Block.prototype,Stubs.prototype);
+	
+	if(!ability.include && !ability.extend){ 
+		Stubs.slugAbility(Block.prototype,ability);
+	}else{
+		if(ability.extend){ Stubs.slubAbility(Block,ability.extend); }
+		if(ability.include){ Stubs.slugAbility(Block.prototype,ability.include); }
+	}
+	
+	Block.className = Block.prototype.className = classname;
+	Block.fn = Block.prototype;
+	Block.events = Block.prototype.events;
+	
+	return Block;
+};
+
+Stubs.prototype = {
+	
+	
+	events : {
+		'nameSpace':{},
+		'eventSpace':{}
 	},
-
-    };
-
-    var proto_methods = {
 	
 	map: function(obj,callback,scope){
 	    var result = [];
@@ -114,22 +139,29 @@
 	isObjectType: function(obj,type){
 	    return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase() === type.toLowerCase();
 	},
-
-	has: function(method,obj){
-	    if(!method || typeof method != 'string'){
-		throw new Error("Argument being passed is not a string!");
-	    }
-	    var status=false;
-	    
-	    this.each(function(n,obj){
-		if(method === n){
-		    status = true;
-		    console.log(method,":",typeof obj[method]);
-		}
-	    });
-	    return status;
+	
+	has: function(property,obj){
+		var state = false;
+		this.onEach(obj,function(o,b,i){
+			if(o == property){
+				state = true;
+			}
+		},this);
+		
+		return state;
 	},
-
+	
+	initEventList: function(o){
+		var list = this.events.eventSpace;
+		if(this.isObjectType(o,"array")){
+			this.onEach(o, function(e){
+				list[e]=[];
+			},this);
+		}else{
+			list[o]=[];
+		}
+	},
+	
 	bindEvent: function(namespace,event,fn){
 	    var list = this.events;
 	    if(!namespace || !event || !fn){
@@ -195,7 +227,9 @@
 	
 	proxy: function(fn){
 		var self=this;
-		return fn.apply(self,arguments);
+		return function(){
+			return fn.apply(self,arguments);
+		};
 	},
 	
 	trigger: function(method){
@@ -204,58 +238,11 @@
 			self[method].apply(this,arguments);
 		}
 	}
-	
-    };
+};
 
-    return {
-    inherit: inherit,
-    map: proto_methods.map,
-	getObjectType: proto_methods.getObjectType,
-    isObjectType: proto_methods.isObjectType,
-	onEach: proto_methods.onEach,
-	
-	create: function(objectname,ability,parent){
-		if(!objectname || typeof objectname !== "string"){ 
-			throw new Error("First argument must be the name of the class!")
-		};
-		
-	    function Stub(){
-			this.className = objectname;
-	    	this.events={
-				'nameSpace':{},
-				'eventSpace':{}
-			};
-			
-			if(Stub.parent){
-				Stub.parent.constructor.apply(this,arguments);
-				this._super = Stub.parent;
-				this.className=objectname;
-			}
-			if(this.initialize){
-		    	this.initialize.apply(this,arguments);
-			}
-	    };
-	    		
-		if(parent){
-			inherit(Stub,parent);
-		};
-		
-		mixer(Stub,class_methods);
-	    mixer(Stub.prototype,proto_methods);
+Stubs.proxy = Stubs.prototype.proxy;
+Stubs.onEach = Stubs.prototype.onEach;
+Stubs.map =  Stubs.prototype.map;
+Stubs.getObjectType = Stubs.prototype.getObjectType;
+Stubs.isObjectType = Stubs.prototype.isObjectType;
 
-	    Stub.prototype.constructor = Stub;
-	    Stub.fn = Stub.prototype;
-	    Stub.fn.initialize = function(){};
-	    
-	    if(ability){
-			if(ability['extend']){ Stub.extend(ability.extend) };
-			if(ability['include']){ Stub.include(ability.include) };
-			if(!ability['extend'] && !ability['include']){ Stub.include(ability) };
-	    }
-		
-		Stub.proxy = Stub.fn.proxy;
-	    return Stub;
-	}
-    };
-
-})();
