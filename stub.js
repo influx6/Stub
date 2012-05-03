@@ -92,6 +92,7 @@ Stubs.create = function(classname,ability,parent){
 	//sets the className for both instance and Object level scope
 	Block.className = Block.fn.className = classname;
 	
+	Block.events = Block.fn.events;
 	Block.extend = Stubs.extend;
 	return Block;
 };
