@@ -4,6 +4,8 @@ var Catalogue = Stubs.create("Catalogue",{
 	
 	init: function(){
 		this.catalogue={};
+		this.log=[];
+		this.paint = false;
 	},
 	 
 	addCatalogue: function(name,catalogue){
@@ -18,9 +20,17 @@ var Catalogue = Stubs.create("Catalogue",{
 	},
 	
 	getCatalogues: function(){
-		console.log("calling parent/inherited catalogue");
+		console.log("Calling super!");
 		return this.catalogue;
 	},
+	
+	getPaint: function(){
+		return this.paint;
+	},
+	
+	getLog: function(){
+		return this.log;
+	}
 	
 });
 
@@ -37,8 +47,7 @@ var Library = Stubs.create("Library",{
 	getBooks: function(){},
 	
 	getCatalogues: function(){
-		this._super.trigger('getCatalogues');
-		return this._super.getCatalogues();
+		return this.super.trigger('getCatalogues',this);
 	}
 	
 }, Catalogue);
@@ -46,10 +55,3 @@ var Library = Stubs.create("Library",{
 
 var NewYork_National = new Library({ name:"NewYork National", size:3000});
 var Manhantan_National = new Library({ name:"Manhantan National", size:3000});
-
-/* 
-
-var NewYork_National = Library({ name:"NewYork National", size:3000});
-var Manhantan_National = Library({ name:"Manhantan National", size:3000});
-
-*/
