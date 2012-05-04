@@ -113,11 +113,6 @@ Stubs.extend = function(name,ability){
 //to them
 
 Stubs.prototype = {
-		
-	events : {
-		'nameSpace':{},
-		'eventSpace':{}
-	},
 	
 	map: function(obj,callback,scope){
 	    var result = [];
@@ -178,80 +173,6 @@ Stubs.prototype = {
 		},this);
 		
 		return state;
-	},
-	
-	initEventType: function(o){
-		var list = this.events.eventSpace;
-		if(this.isObjectType(o,"array")){
-			this.onEach(o, function(e){
-				list[e]=[];
-			},this);
-		}else{
-			list[o]=[];
-		}
-	},
-	
-	bindEvent: function(namespace,event,fn){
-	    var list = this.events;
-	    if(!namespace || !event || !fn){
-		  throw new Error("Incorrect number of arguments were giving!"); return;}
-		
-		if(!list.nameSpace[namespace]){ 
-				list.nameSpace[namespace]=fn;
-				if(!list.eventSpace[event]){
-					list.eventSpace[event] = [];
-				};
-		}else{
-			console.error("Namespace already being Used!");
-			throw new Error("Namespace already being Used!");
-		}
-		
-		list.eventSpace[event].push(namespace);
-	},
-	
-	unbindEvent: function(event,namespace){
-		var list = this.events;
-		
-		if(!list.nameSpace[namespace]){
-			throw new Error("Namespace doesnt exists!");
-		}
-		
-		var e = list.eventSpace[event],match;
-		this.onEach(e,function(o,i,b){
-			if(o == namespace){
-				match=e.splice(i,1);
-				delete list.nameSpace[o];
-				console.log("Event:",namespace,"removed!");
-			}
-		},e)
-		
-	},
-
-	triggerEvent: function(event,arg){
-		var list = this.events;
-		if(!list.eventSpace[event]) return;
-			
-		var e = list.eventSpace[event];
-		this.onEach(e,function(o,i,b){
-			list.nameSpace[o].apply(this,arg || []);
-		},e)
-	},
-
-	flushEvents: function(event){
-		var list = this.events;
-		var e = list.eventSpace[event];
-		
-		this.onEach(e,function(o,i,b){
-			delete list.nameSpace[o];
-			e.splice(i,1);
-		},e);
-		
-	},
-	
-	flushAllEvents: function(){
-		var list = this.events;
-		list.nameSpace={};
-		list.eventSpace ={};
 	},
 	
 	proxy: function(fn){

@@ -40,13 +40,16 @@ var Library = Stubs.create("Library",{
 		this.bookLists=[];
 	},
 	
-	addBook: function(book,catalogue){},
+	addBook: function(book,catalogue){
+		this.triggerEvent('change');
+	},
 	
 	removeBook: function(){},
 		
 	getBooks: function(){},
 	
 	getCatalogues: function(){
+		console.log(this.className," triggered!");
 		return this.super.trigger('getCatalogues',this);
 	}
 	
@@ -55,3 +58,5 @@ var Library = Stubs.create("Library",{
 
 var NewYork_National = new Library({ name:"NewYork National", size:3000});
 var Manhantan_National = new Library({ name:"Manhantan National", size:3000});
+
+
