@@ -209,17 +209,22 @@ Stubs.prototype = {
 	_addEvent: function(event,namespace,callback){
 		if(this.events.namespace[namespace]){
 			throw new Error("Namespace already exists!");
-		}
+		}else{
 		
+		this.events.namespace[namespace] = callback;
 		if(!this.events.eventspace[event]){
 			this.events.eventspace[event]=[];
 		}
 		
-		this.events.namespace[namespace] = callback;
-		this.events.eventspace[event] = namspace;
+		this.events.eventspace[event].push(namespace);
+		}
 	},
 	
-	_removeEvent: function(){},
+	_removeEvent: function(event,namespace){
+		if(this.events.namespace[namespace]){
+			this.events.eventspace[namespace];
+		}
+	},
 	
 	flushEvents: function(){
 		this.events.namespace = {};
@@ -234,7 +239,7 @@ Stubs.prototype = {
 		}
 	},
 	
-	unSubscribe: function(obj,namespace){
+	unSubscribe: function(obj,event,namespace){
 		
 	},
 	
