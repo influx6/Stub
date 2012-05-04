@@ -93,7 +93,7 @@ Stubs.create = function(classname,ability,parent){
 	Block.fn.triggerEvent = Block.fn.publish
 	
 	//sets the className for both instance and Object level scope
-	Block.className = Block.fn.className = classname;
+	Block.ObjectClassName = Block.fn.ObjectClassName = classname;
 	
 	Block.extend = Stubs.extend;
 	return Block;
@@ -201,29 +201,40 @@ Stubs.prototype = {
 			this.onEach(o, function(o,i,b){
 				this.events.eventspace[o] = [];
 			},this);
-		}else if(typeof o == "String"){
+		}else if(typeof o == "string"){
 			this.events.eventspace[o]=[];
 		}
 	},
 	
-	_addEvent: function(event,namespace,callback){
+	_addEvent: function(event,namespace,callback,scope){
 		if(this.events.namespace[namespace]){
 			throw new Error("Namespace already exists!");
 		}else{
 		
-		this.events.namespace[namespace] = callback;
 		if(!this.events.eventspace[event]){
 			this.events.eventspace[event]=[];
 		}
 		
+		this.events.namespace[namespace] = function(){
+			return callback.apply(scope,arguments);
+		};
 		this.events.eventspace[event].push(namespace);
 		}
 	},
 	
 	_removeEvent: function(event,namespace){
-		if(this.events.namespace[namespace]){
-			this.events.eventspace[namespace];
+		if(!this.events.namespace[namespace]){
+			return;
 		}
+		
+		var list = this.events;
+		
+		this.onEach(list.eventspace[event], function(o,i,b){
+			if(o == namespace){
+				b.splice(i,1);
+				delete list.namespace[namespace];
+			}
+		},this);
 	},
 	
 	flushEvents: function(){
@@ -233,18 +244,41 @@ Stubs.prototype = {
 	
 	subscribe: function(obj,event,namespace,callback){
 		if(obj && obj._addEvent){
-			obj.addEvent(event,namespace,function(){
-				callback.apply(this,arguments);
-			});
+			obj._addEvent(event,namespace,callback,this);
 		}
 	},
 	
 	unSubscribe: function(obj,event,namespace){
-		
+		if(obj && obj._removeEvent){
+			obj._removeEvent(event,namespace);
+		}
 	},
 	
-	publish: function(event){
+	publish: function(event,args,namespace){
+		if(!this.events.eventspace[event]) return;
 		
+		var list = this.events;
+		
+		if(!namespace){
+			
+			this.onEach(list.eventspace[event],function(o,i,b){
+				this.events.namespace[o].apply(this,args || []);
+			},this);
+			
+		}else if(typeof namespace == "string"){
+			
+			this.events.namespace[namespace].apply(this,args || []);
+			
+		}else if(this.isObjectType(namespace,'array')){
+			this.onEach(list.eventspace[event],function(o,i,b){
+				this.onEach(namespace, function(e,h,k){
+					if(e == o){
+						this.events.namespace[e].apply(this,args || []);
+					}
+				},this);
+			},this);
+		}
+	
 	},
 	
 };
