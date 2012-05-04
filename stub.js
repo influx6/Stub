@@ -88,11 +88,13 @@ Stubs.create = function(classname,ability,parent){
 	
 	//shortcut to all Block objects prototype;
 	Block.fn = Block.prototype;
+	Block.fn.bindEvent = Block.fn.subscribe;
+	Block.fn.unBindEvent = Block.fn.unSubscribe;
+	Block.fn.triggerEvent = Block.fn.publish
 	
 	//sets the className for both instance and Object level scope
 	Block.className = Block.fn.className = classname;
 	
-	Block.events = Block.fn.events;
 	Block.extend = Stubs.extend;
 	return Block;
 };
@@ -113,6 +115,11 @@ Stubs.extend = function(name,ability){
 //to them
 
 Stubs.prototype = {
+	
+	events : {
+		namespace: {},
+		eventspace:{}
+	},
 	
 	map: function(obj,callback,scope){
 	    var result = [];
@@ -187,7 +194,54 @@ Stubs.prototype = {
 		if(self[method]){
 			return self[method].apply(scope,arguments);
 		};
-	}
+	},
+	
+	setEventTypes: function(o){
+		if(this.isObjectType(o,"array")){
+			this.onEach(o, function(o,i,b){
+				this.events.eventspace[o] = [];
+			},this);
+		}else if(typeof o == "String"){
+			this.events.eventspace[o]=[];
+		}
+	},
+	
+	_addEvent: function(event,namespace,callback){
+		if(this.events.namespace[namespace]){
+			throw new Error("Namespace already exists!");
+		}
+		
+		if(!this.events.eventspace[event]){
+			this.events.eventspace[event]=[];
+		}
+		
+		this.events.namespace[namespace] = callback;
+		this.events.eventspace[event] = namspace;
+	},
+	
+	_removeEvent: function(){},
+	
+	flushEvents: function(){
+		this.events.namespace = {};
+		this.events.eventspace = {};
+	},
+	
+	subscribe: function(obj,event,namespace,callback){
+		if(obj && obj._addEvent){
+			obj.addEvent(event,namespace,function(){
+				callback.apply(this,arguments);
+			});
+		}
+	},
+	
+	unSubscribe: function(obj,namespace){
+		
+	},
+	
+	publish: function(event){
+		
+	},
+	
 };
 
 
