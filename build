@@ -1,0 +1,12 @@
+var jsconcat = require("jsConcat").JsConcat;
+
+var stub = {
+	'uglify':false,
+	'build_dir':'./builds',
+	'name':'stub.min.js',
+	'src_dir':'.',
+	'src':['stub.js']
+};
+
+
+jsconcat.compile(stub);
