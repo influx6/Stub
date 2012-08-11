@@ -1,7 +1,7 @@
 {
 	"name": "stub",
 	
-	"version":"0.0.3",
+	"version":"0.3.1",
 	
 	"author":"Alex Ewetumo",
 	
@@ -11,10 +11,14 @@
 	
 	"description": "simple,lightweight class inheritance for the masses",
 	
+	"owner":{
+	 	"name":"Alexander Ewetumo",
+		"email":"trinoxf@gmail.com"
+	},
+	
 	"repository":{
-		"email":"trinoxf@gmail.com",
 		"type":"git",
-		"url":"https://github.com/influx6/Stub"
+		"url":"https://github.com/influx6/Stub.git"
 	},
 	
 	"engine":{

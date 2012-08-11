@@ -165,14 +165,77 @@
 
          return state;
       },
+
+      //handles iteration of both of any and anyObject 
+      /*  when supply the property always remember to skip the keys,that is the
+       *  top level name used to access each inner object,u search for the
+       *  property within that property that matches the specific value like eg:
+       *  var s = { b:'sucker' ,s:{ k:{ live: true}, v:'a',live: false}, g:{ v:'aa',live:true}}; 
+       *  Stubs.SU._anyIterator(s,['k','live'],true);
+       */
+      _anyIterator: function(o,property,value){
+
+         var keys = this.keys(o);
+         for(var i=0,len = keys.length; i < len; i++){
+             var item = o[keys[i]];
+             if(!property){  
+                if(item === value){
+                  return keys[i];
+                  break;
+                } 
+             }
+             if(property && !this.isArray(property)){
+                if(item[property] === value){
+                   return keys[i]; 
+                   break;
+                }
+             }
+             if(property && this.isArray(property)){
+                var tail=item[0],plen = property.length;
+                for(var j = 1; j < plen; j++){
+                   tail = tail[property[j]];
+                }
+                console.log(tail);
+                if(tail === value){
+                   return keys[i];
+                   break;
+                }
+             }
+         }
+      },
      
-      //mainly works with arrays only
+      // returns the position of the first item that meets the value
       any: function(o,value){
          for(var i=0,len = o.length; i < len; i++){
             if(value === o[i]){
-               return true;
+               return i;
+               break;
             }
          }
+         return false;
+      },
+
+      /* returns the key of the first item that meets the value
+      *  @{Params} Object: the object to be checked
+      *  @{Params} Property: a value or array of values to check on the object if it has
+      *  a inner object or set as null to just check,it will go as deep into
+      *  the object as the number of property giving,so know your object and
+      *  the level of deepness of each key:object pair
+      *  against value
+      *  @{params} Value: value to check against in the object
+      */
+      anyObject: function(o,property,value){
+         if(!this.isObject(o)) return;
+         
+         //returns the attribute or parent object in case of deep level
+         //property searches that contains the specific value against the specific 
+         //property
+         /*
+         var find = this._anyIterator(o,property,value);
+
+         console.log(find);
+         if(find) return find;
+         */
          return false;
       },
 
@@ -374,7 +437,6 @@
        },
 
 	 keys: function(o,a){
-		if(!this.matchType(o,"object")){ return; }
 		var keys = a || [];
 		Stubs.SU.onEach(o,function(e,i,b){
 			keys.push(i);
@@ -383,7 +445,6 @@
 	 },
 	
 	 values: function(o,a){
-		if(!this.matchType(o,"object")){ return; }
 		var keys = a || [];
 		Stubs.SU.onEach(o,function(e,i,b){
 			keys.push(e);
@@ -395,7 +456,7 @@
 		return this.matchType(o,"arguments")
 	},
 	
-	//normalize array,ensures theres no undefined or empty spaces between arrays
+	//normalizes an array,ensures theres no undefined or empty spaces between arrays
 	normArray: function(a){
 		if(!a || !this.isArray(a)) return; 
 		
