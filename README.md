@@ -1,4 +1,4 @@
-#  Stub 	v0.0.3
+#  Stub 	
 
 A lightweight classical inheritance class structure for your javascript libraries/
 			
