@@ -502,11 +502,19 @@
          return event[ns];
         },
       
-      
-      unContext: function(ens,context,parent){
+     
+      unContext: function(ens,callback,context){
             Stubs.SU.onEach(ens, function(e,i,b){
-               if(e.context == context){
-                  delete b[i];
+               if(!callback && context && (e.context === context)){
+                  delete b[i]; return;
+               }
+
+               if(callback && !context && (e.fn === callback)){
+                   delete b[i]; return;
+               }
+
+               if(callback && context && ( e.fn === callback) && (e.context === context)){
+                   delete b[i]; return;
                }
             });
             
@@ -521,14 +529,14 @@
                 return ({ key:key,fn:callback,context:context });
        },
 
-       _withMultiple: function(es,context,callback,isOn){
+       _withMultiple: function(es,callback,context,isOn){
             var keys = es.split(event_split),that = this;
 
             if(keys.length == 1){ 
                if(keys[0].match(eventnms)){
                   keys =  keys[0].match(eventnms);
                   if(!isOn){
-                     this._unEvent(keys[1],keys[2],context);
+                     this._unEvent(keys[1],keys[2],callback,context);
                      return;
                   }
                   this._withEvent(keys[1],keys[2],callback,context);
@@ -537,7 +545,7 @@
 
                keys = keys[0];
                if(!isOn){
-                  this._unEvent(keys,null,context);
+                  this._unEvent(keys,null,callback,context);
                   return;
                }
                this._withEvent(keys,"all",callback,context);
@@ -548,14 +556,14 @@
                   if(e.match(eventnms)){
                      var ev = e.match(eventnms);
                      if(!isOn){
-                        this._unEvent(ev[1],ev[2],context);
+                        this._unEvent(ev[1],ev[2],callback,context);
                         return;
                      }
                      this._withEvent(ev[1],ev[2],callback,context);
                      return;
                   }
                   if(!isOn){	
-                     this._unEvent(e,null,context);
+                     this._unEvent(e,null,callback,context);
                      return;				
                   }
                   this._withEvent(e,"all",callback,context);
@@ -575,10 +583,10 @@
             return;
        },
 
-       _unEvent: function(es,space,context){
+       _unEvent: function(es,space,callback,context){
          var e = this,event;
 
-         if(!es && !space && !context){
+         if(!es && !space && !callback && !context){
             Stubs.SU.explode(e.events);
             return;
          }
@@ -587,25 +595,39 @@
             return; 
          }
 
-         if(es && !space && !context){
+         if(es && !space && !callback && !context){
             Stubs.SU.explode(e.withKey(es,null,true));
             return;
          }
 
-         if(es && space && !context){
+         if(es && space && !callback && !context){
             Stubs.SU.explode(e.withKey(es,space,true));
             return;
          }
 
-         if(es && !space && context){
+         if(es && !space && !callback && context){
             Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
-               e.unContext(k,context);
+               e.unContext(k,null,context);
             });
             return;
          };
 
-         if(es && space && context){
-            e.unContext(e.withKey(es,space,true),context);
+         if(es && !space && callback && context){
+            Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
+               e.unContext(k,callback,context);
+            });
+            return;
+         };
+         
+         if(es && !space && callback && !context){
+            Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
+               e.unContext(k,callback,null);
+            });
+            return;
+         };
+
+         if(es && space && callback && context){
+            e.unContext(e.withKey(es,space,true),callback,context);
             return;
          }
        },
@@ -673,17 +695,25 @@
 	         }
 
             //major workhorse here ,handling the real work here 
-            this._withMultiple(es,context,callback,true);
+            this._withMultiple(es,callback,context,true);
             return;
       },
 	
 
-	
-     off: function(es,context){
+	 // off simple unbinds an event from the object
+    // {params} es - represent the event you wish to unbind from you can write
+    // in colom to specific the specific event eg name:change or just specify
+    // the main event eg name ,be left as null
+    // {params} callback - incase you specified a non-anonnymouse function,you
+    // can pass this to match the function to specifically remove,it can be
+    // left as null
+    // {params} context - this specify the context of the specific function to
+    // be removed,it can be left as null 
+     off: function(es,callback,context){
 			var keys;
 			
-			if(!es && !context){
-				this._unEvent(null,null,null);
+			if(!es && !callback && !context){
+				this._unEvent(null,null,null,null);
 				return;
 			};
 			
@@ -693,27 +723,43 @@
 			if(es == "*:all"){
 				keys = Stubs.SU.keys(k.events);
 				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,"all",context);
+					this._unEvent(e,"all",callback,context);
 				},this);	
 				return;			
 			};
 			
-      		//special all or all:all event triggers removal of all events 
+      	//special all or all:all event triggers removal of all events 
 			//from the special all stack
 			if(es == "all"){
-				this._unEvent(es,es,context);
+				this._unEvent(es,es,callback,context);
 				return;
 			};
 			
-			if(!es && context){
-				keys = Stubs.SU.keys(k.events);
+			if(!es && !callback,context){
+				keys = Stubs.SU.keys(this.events);
 				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,null,context);
+					this._unEvent(e,null,callback,context);
+				},this);	
+				return;
+			};
+
+			if(!es && callback && !context){
+				keys = Stubs.SU.keys(this.events);
+				Stubs.SU.onEach(keys,function(e,i,b){
+					this._unEvent(e,null,callback,null);
 				},this);	
 				return;
 			};
 			
-		 	this._withMultiple(es,context,null,false);
+			if(!es && callback && context){
+				keys = Stubs.SU.keys(this.events);
+				Stubs.SU.onEach(keys,function(e,i,b){
+					this._unEvent(e,null,callback,context);
+				},this);	
+				return;
+			};
+
+		 	this._withMultiple(es,callback,context,false);
 			return;
 		
       },
