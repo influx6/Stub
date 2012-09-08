@@ -86,7 +86,8 @@
        makeArray: function(){
          return ([].splice.call(arguments,0));
        },
-       
+
+      //for string just iterates a single as specificed in the first arguments 
        forString : function(i,value){
          if(!value) return;
          var i = i || 1,message = "";
@@ -101,7 +102,6 @@
       makeString : function(split){
          var split = split || " ",
          args = this.makeArray.apply(null,arguments);
-         console.log("args");
          return args.splice(1,args.length).join(split);
       },
 
