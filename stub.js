@@ -36,6 +36,9 @@
    //the current in use version of Stub
    Stubs.version = "0.3.1";
 
+   //config option to decide if stub that are created are to have the
+   //Stub.Events available as part of their prototype or not
+   Stubs.useEvents = true;
 
    //this class level method handles classic-type inheritance,ensure to use it before
    //assigning any properties to the child prototype,incase of using the stub class without
@@ -54,19 +57,6 @@
 
    };
 
-   //nice if you want to share some specific features which to other objects like the onEach
-   //method or the map method or any method which a non-instanciated method has in its prototype
-   Stubs.share = function(obj,set){
-      var client = obj, server = this.prototype;
-      
-      for(var i = 0; i < set.length; i++){
-         var c = set[i];
-         if(!client[c] && server[c]){
-            client[c] =  server[c];
-         }
-      }
-      
-   };
 
    //Stubs.SU (SU = Stub Utility)
    //Stubs utility functions for handling different ops like extend ,custom splice,etc.
@@ -93,10 +83,32 @@
       
    Stubs.SU = {
 
+       makeArray: function(){
+         return ([].splice.call(arguments));
+       },
+       
+       forString : function(i,value){
+         if(!value) return;
+         var i = i || 1,message = "";
+         while(true){
+            message += value;
+            if((--i) <= 0) break;
+         }
+
+         return message;
+      },
+
+      makeString : function(split){
+         var split = split || " ",
+         args = this.makeArray.apply(null,arguments);
+         console.log("args");
+         return args.splice(1,args.length).join(split);
+      },
+
       createProxyFunctions: function(from,to,context){
           if(!context) context = to;
 
-          this.onEach(from,function(e,i,b){
+          this.forEach(from,function(e,i,b){
              if(!this.matchType(e,"function")) return;
              to[i] = function(){ 
                 return b[i].apply(context,arguments);
@@ -104,7 +116,7 @@
           },this);
       },
 
-      createProperty: function(obj,name,fns,props){
+      createProperty: function(obj,name,fns){
          if(!("defineProperty" in Object) && Object.__defineGetter__ && Object.__defineSetter__){
             if(fns.get) obj.__defineGetter__(name,fns.get);
             if(fns.set) obj.__defineSetter__(name,fns.set);
@@ -117,29 +129,11 @@
          return;
       },
 
-      makeMethodChain: function(methodname,func,scope){
-         scope[methodname]=func;
-         return this;
-         //simple lets u create methods in chains onto an object
-         //simple makeMethodChain('thismethod',func).makeMethodChain('anothermethod',func) etc.
-      },
-
-      makeChainable: function(methodname,func,scope){
-         scope[methodname]= function(){
-            func.apply(scope,arguments);
-            return scope;
-         };
-         return this;
-
-         //simple mechanism to add chainable methods to an object, please specify scope to be the object or object's prototype,or just 
-         //extend object with this method to use it directly from them
-      },
-
       extends:function(){
          var obj = arguments[0];
          var args = Array.prototype.splice.call(arguments,1,arguments.length);
          
-         Stubs.SU.onEach(args,function(o,i,b){
+         Stubs.SU.forEach(args,function(o,i,b){
             if(o  !== undefined && typeof o == "object"){
                for(var prop in o){
                      var g = o.__lookupGetter__(prop), s = o.__lookupSetter__(prop);
@@ -151,14 +145,12 @@
             }
          },this);
 
-         //this methods handles all managing of copying methods back and forth between objects,the first arguments
-         //is the object to be copied to and the rest the objects to copy from
       },
       
       contains: function(o,value){
          var state = false;
-         this.onEach(o,function(e,i,b){
-            if(e == value) {
+         this.forEach(o,function(e,i,b){
+            if(e === value) {
                state = true; 
             }
          },this);
@@ -166,46 +158,47 @@
          return state;
       },
 
-      //handles iteration of both of any and anyObject 
-      /*  when supply the property always remember to skip the keys,that is the
-       *  top level name used to access each inner object,u search for the
-       *  property within that property that matches the specific value like eg:
-       *  var s = { b:'sucker' ,s:{ k:{ live: true}, v:'a',live: false}, g:{ v:'aa',live:true}}; 
-       *  Stubs.SU._anyIterator(s,['k','live'],true);
-       */
-      _anyIterator: function(o,property,value){
+      // //handles iteration of both of any and anyObject 
+      // /*  when supply the property always remember to skip the keys,that is the
+      //  *  top level name used to access each inner object,u search for the
+      //  *  property within that property that matches the specific value like eg:
+      //  *  var s = { b:'sucker' ,s:{ k:{ live: true}, v:'a',live: false}, g:{ v:'aa',live:true}}; 
+      //  *  Stubs.SU._anyIterator(s,['k','live'],true);
+      //  */
+      // _anyIterator: function(o,property,value){
 
-         var keys = this.keys(o);
-         for(var i=0,len = keys.length; i < len; i++){
-             var item = o[keys[i]];
-             if(!property){  
-                if(item === value){
-                  return keys[i];
-                  break;
-                } 
-             }
-             if(property && !this.isArray(property)){
-                if(item[property] === value){
-                   return keys[i]; 
-                   break;
-                }
-             }
-             if(property && this.isArray(property)){
-                var tail=item[0],plen = property.length;
-                for(var j = 1; j < plen; j++){
-                   tail = tail[property[j]];
-                }
-                console.log(tail);
-                if(tail === value){
-                   return keys[i];
-                   break;
-                }
-             }
-         }
-      },
+      //    var keys = this.keys(o);
+      //    for(var i=0,len = keys.length; i < len; i++){
+      //        var item = o[keys[i]];
+      //        if(!property){  
+      //           if(item === value){
+      //             return keys[i];
+      //             break;
+      //           } 
+      //        }
+      //        if(property && !this.isArray(property)){
+      //           if(item[property] === value){
+      //              return keys[i]; 
+      //              break;
+      //           }
+      //        }
+      //        if(property && this.isArray(property)){
+      //           var tail=item[0],plen = property.length;
+      //           for(var j = 1; j < plen; j++){
+      //              tail = tail[property[j]];
+      //           }
+      //           console.log(tail);
+      //           if(tail === value){
+      //              return keys[i];
+      //              break;
+      //           }
+      //        }
+      //    }
+      // },
      
-      // returns the position of the first item that meets the value
+      // returns the position of the first item that meets the value in an array
       any: function(o,value){
+         if(!this.isArray(o)) return;
          for(var i=0,len = o.length; i < len; i++){
             if(value === o[i]){
                return i;
@@ -215,38 +208,14 @@
          return false;
       },
 
-      /* returns the key of the first item that meets the value
-      *  @{Params} Object: the object to be checked
-      *  @{Params} Property: a value or array of values to check on the object if it has
-      *  a inner object or set as null to just check,it will go as deep into
-      *  the object as the number of property giving,so know your object and
-      *  the level of deepness of each key:object pair
-      *  against value
-      *  @{params} Value: value to check against in the object
-      */
-      anyObject: function(o,property,value){
-         if(!this.isObject(o)) return;
-         
-         //returns the attribute or parent object in case of deep level
-         //property searches that contains the specific value against the specific 
-         //property
-         /*
-         var find = this._anyIterator(o,property,value);
-
-         console.log(find);
-         if(find) return find;
-         */
-         return false;
-      },
-
       //mainly works wth arrays only
       //flattens an array that contains multiple arrays into a single array
       flatten: function(arrays){
          var flat = [];
-         this.onEach(arrays,function(a){
+         this.forEach(arrays,function(a){
 
             if(this.isArray(a)){
-               this.onEach(a,function(e){
+               this.forEach(a,function(e){
                   flat.push(e);
                },this);
             }else{
@@ -260,7 +229,7 @@
 
       filter: function(array,fn,scope){
          var result=[],scope = scope || this;
-         this.onEach(array,function(e,i,b){
+         this.forEach(array,function(e,i,b){
            if(fn.call(scope,e,i,b)){
               result.push(e);
            }
@@ -270,8 +239,8 @@
 
       occurs: function(o,value){
          var occurence = 0;
-         this.onEach(o,function(e,i,b){
-               if(e == value) occurence += 1; 
+         this.forEach(o,function(e,i,b){
+               if(e === value) occurence += 1; 
          },this);
          return occurence;
       },
@@ -290,16 +259,16 @@
             if(this.matchType(arguments[0],"object")) this._explodeObject(arguments[0]);
          }
          if(arguments.length > 1){
-            this.onEach(arguments,function(e,i,b){
+            this.forEach(arguments,function(e,i,b){
                if(this.isArray(e)) this._explodeArray(e);
                if(this.matchType(e,"object")) this._explodeObject(e);
-            });
+            },this);
          }
       },
 
       _explodeArray: function(o){
          if(this.isArray(o)){
-            this.onEach(o,function(e,i,b){
+            this.forEach(o,function(e,i,b){
                delete b[i];
             },this);
 			o.length = 0;
@@ -310,7 +279,7 @@
       
       _explodeObject: function(o){
          if(this.matchType(o,"object")){
-            this.onEach(o, function(e,i,b){
+            this.forEach(o, function(e,i,b){
                delete b[i];
             },this);
             if(o.length) o.length = 0;
@@ -320,10 +289,10 @@
       },
       
       is: function(prop,value){
-         return (prop === value);
+         return (prop === value) ? true : false;
       },
       
-      onEach: function(obj,callback,scope){
+      forEach: function(obj,callback,scope){
          
           if('length' in obj || this.isArray(obj) || this.matchType(obj,"string")){
             for(var i=0; i < obj.length; i++){
@@ -343,7 +312,7 @@
       map: function(obj,callback,scope){
           var result = [];
          
-         Stubs.SU.onEach(obj,function(o,i,b){
+         Stubs.SU.forEach(obj,function(o,i,b){
             var r = callback.call(scope,o,i,b);
             if(r) result.push(r);
          },scope);
@@ -356,7 +325,7 @@
      //it will be returned once finished eg var b = clone(a,{}); or b=clone(a,[]);
 
      clone: function(from,to){
-           this.onEach(from,function(e,i,b){
+           this.forEach(from,function(e,i,b){
 
                 if(this.isArray(e)){
                      if(!to[i]) to[i] = [];
@@ -374,6 +343,9 @@
            return to;
     },
   
+      isType: function(o){
+          return ({}).toString.call(o).match(/\s([\w]+)/)[1].toLowerCase();
+      },
 
       matchType: function(obj,type){
           return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase() === type.toLowerCase();
@@ -429,7 +401,7 @@
 			var slice = [].splice.call(arguments,0),
 			focus = slice[0],rem  = slice.splice(1,slice.length);
 						
-			this.onEach(rem,function(e,i,b){
+			this.forEach(rem,function(e,i,b){
 				_pusher.call(focus,e);
 			});
 		    return;
@@ -438,7 +410,7 @@
 
 	 keys: function(o,a){
 		var keys = a || [];
-		Stubs.SU.onEach(o,function(e,i,b){
+		Stubs.SU.forEach(o,function(e,i,b){
 			keys.push(i);
 		});
 		return keys;
@@ -446,7 +418,7 @@
 	
 	 values: function(o,a){
 		var keys = a || [];
-		Stubs.SU.onEach(o,function(e,i,b){
+		Stubs.SU.forEach(o,function(e,i,b){
 			keys.push(e);
 		});
 		return keys;
@@ -503,17 +475,34 @@
         },
       
      
-      unContext: function(ens,callback,context){
-            Stubs.SU.onEach(ens, function(e,i,b){
-               if(!callback && context && (e.context === context)){
+      unContext: function(ens,callback,context,subscriber){
+            Stubs.SU.forEach(ens, function(e,i,b){
+               if(!callback && context && !subscriber && (e.context === context)){
                   delete b[i]; return;
                }
 
-               if(callback && !context && (e.fn === callback)){
+               if(!callback && !context && subscriber && (e.subscriber === subscriber)){
+                  delete b[i]; return;
+               }
+
+               if(!callback && context && subscriber && (e.subscriber === subscriber) && (e.context === context)){
+                  delete b[i]; return;
+               }
+
+               if(callback && !context  && !subscriber && (e.fn === callback)){
                    delete b[i]; return;
                }
 
-               if(callback && context && ( e.fn === callback) && (e.context === context)){
+               if(callback && context && !subscriber && (e.fn === callback) && (e.context === context)){
+                  delete b[i]; return;
+               }
+
+               if(callback && !context && subscriber && (e.fn === callback) && (e.subscriber === subscriber)){
+                  delete b[i]; return;
+               }
+
+               if(callback && context && subscriber && ( e.fn === callback) 
+                  && (e.context === context) && (e.subscriber === subscriber)){
                    delete b[i]; return;
                }
             });
@@ -525,68 +514,68 @@
             return { all:[] };
          },
 
-     createFragment: function(key,callback,context){
-                return ({ key:key,fn:callback,context:context });
+     createFragment: function(callback,context,subscriber){
+                return ({fn:callback,context:context,subscriber:subscriber});
        },
 
-       _withMultiple: function(es,callback,context,isOn){
+       _withMultiple: function(es,callback,context,subscriber,isOn){
             var keys = es.split(event_split),that = this;
 
             if(keys.length == 1){ 
                if(keys[0].match(eventnms)){
                   keys =  keys[0].match(eventnms);
                   if(!isOn){
-                     this._unEvent(keys[1],keys[2],callback,context);
+                     this._unEvent(keys[1],keys[2],callback,context,subscriber);
                      return;
                   }
-                  this._withEvent(keys[1],keys[2],callback,context);
+                  this._withEvent(keys[1],keys[2],callback,context,subscriber);
                   return;
                }
 
                keys = keys[0];
                if(!isOn){
-                  this._unEvent(keys,null,callback,context);
+                  this._unEvent(keys,null,callback,context,subscriber);
                   return;
                }
-               this._withEvent(keys,"all",callback,context);
+               this._withEvent(keys,"all",callback,context,subscriber);
                return;
 
             }else{
-               Stubs.SU.onEach(keys,function(e,i,n){
+               Stubs.SU.forEach(keys,function(e,i,n){
                   if(e.match(eventnms)){
                      var ev = e.match(eventnms);
                      if(!isOn){
-                        this._unEvent(ev[1],ev[2],callback,context);
+                        this._unEvent(ev[1],ev[2],callback,context,subscriber);
                         return;
                      }
-                     this._withEvent(ev[1],ev[2],callback,context);
+                     this._withEvent(ev[1],ev[2],callback,context,subscriber);
                      return;
                   }
                   if(!isOn){	
-                     this._unEvent(e,null,callback,context);
+                     this._unEvent(e,null,callback,context,subscriber);
                      return;				
                   }
-                  this._withEvent(e,"all",callback,context);
+                  this._withEvent(e,"all",callback,context,subscriber);
                   return;
                },this);
             }
       },
 
-       _withEvent: function(es,space,callback,context){
+       _withEvent: function(es,space,callback,context,subscriber){
             if(!es && !space){ return; }
 
             var e = this,event;
 
             event = e.withKey(es,space);
-            event.push(e.createFragment(es+":"+space,callback,context));
+            event.push(e.createFragment(callback,context,subscriber));
 
             return;
        },
 
-       _unEvent: function(es,space,callback,context){
+       _unEvent: function(es,space,callback,context,subscriber){
          var e = this,event;
 
-         if(!es && !space && !callback && !context){
+         if(arguments.length === 0){
             Stubs.SU.explode(e.events);
             return;
          }
@@ -595,41 +584,26 @@
             return; 
          }
 
-         if(es && !space && !callback && !context){
+         if(es && !space && !callback && !context && !subscriber){
             Stubs.SU.explode(e.withKey(es,null,true));
             return;
          }
 
-         if(es && space && !callback && !context){
+         if(es && space && !callback && !context && !subscriber){
             Stubs.SU.explode(e.withKey(es,space,true));
             return;
          }
 
-         if(es && !space && !callback && context){
-            Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
-               e.unContext(k,null,context);
-            });
-            return;
-         };
-
-         if(es && !space && callback && context){
-            Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
-               e.unContext(k,callback,context);
-            });
-            return;
-         };
-         
-         if(es && !space && callback && !context){
-            Stubs.SU.onEach(e.withKey(es,null,true),function(k,i,b){
-               e.unContext(k,callback,null);
-            });
-            return;
-         };
-
-         if(es && space && callback && context){
-            e.unContext(e.withKey(es,space,true),callback,context);
+         if(es && space && callback && context && subscriber){
+            e.unContext(e.withKey(es,space,true),callback,context,subscriber);
             return;
          }
+
+         Stubs.SU.forEach(e.withKey(es,null,true),function(k,i,b){
+            e.unContext(k,callback,context,subscriber);
+         });
+
+         return;
        },
       
        //due for the need of readability this method is created to encapsulate
@@ -639,7 +613,7 @@
 
             var keys,fire = function(array){
                if(array.length == 0) return;
-               Stubs.SU.onEach(array,function(e,i,b){
+               Stubs.SU.forEach(array,function(e,i,b){
                   if(!Stubs.SU.isObject(e) || !e.fn || !Stubs.SU.isFunction(e.fn)) return;
                   e.fn.apply(e.context ? e.context : this,args);
                },this);
@@ -652,7 +626,7 @@
 
             if(Stubs.SU.isObject(o)){
                keys = Stubs.SU.keys(o);
-               Stubs.SU.onEach(keys,function(e,i,b){
+               Stubs.SU.forEach(keys,function(e,i,b){
                    fire(o[e]);
                },this);
               return;
@@ -661,7 +635,8 @@
             return;
         },
 	
-     on:function(es,callback,context){
+     on:function(es,callback,context,subscriber){
+	     if(!this.events) this.events = {};
          if(!es || !callback){ return; }
 
          var keys;
@@ -689,13 +664,13 @@
         
 			//general case use "change" or "change:name" or "edit:article" etc
 			
-	         if(es == "all"){ 
-                this._withEvent(es,es,callback,context);
+	         if(es === "all"){ 
+                this._withEvent(es,es,callback,context,subscriber);
                 return;
 	         }
 
             //major workhorse here ,handling the real work here 
-            this._withMultiple(es,callback,context,true);
+            this._withMultiple(es,callback,context,subscriber,true);
             return;
       },
 	
@@ -709,21 +684,20 @@
     // left as null
     // {params} context - this specify the context of the specific function to
     // be removed,it can be left as null 
-     off: function(es,callback,context){
-			var keys;
-			
-			if(!es && !callback && !context){
-				this._unEvent(null,null,null,null);
+     off: function(es,callback,context,subscriber){
+    
+			if(arguments.length  === 0){
+				this._unEvent();
 				return;
 			};
 			
 			//special all or *:all event triggers removal of all events 
 			// from all event types with their respective various namespace types
+         var keys = Stubs.SU.keys(this.events);
 			
 			if(es == "*:all"){
-				keys = Stubs.SU.keys(k.events);
-				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,"all",callback,context);
+				Stubs.SU.forEach(keys,function(e,i,b){
+					this._unEvent(e,"all",callback,context,subscriber);
 				},this);	
 				return;			
 			};
@@ -731,35 +705,18 @@
       	//special all or all:all event triggers removal of all events 
 			//from the special all stack
 			if(es == "all"){
-				this._unEvent(es,es,callback,context);
+				this._unEvent(es,es,callback,context,subscriber);
 				return;
 			};
 			
-			if(!es && !callback,context){
-				keys = Stubs.SU.keys(this.events);
-				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,null,callback,context);
+			if(!es || callback || context){
+				Stubs.SU.forEach(keys,function(e,i,b){
+					this._unEvent(e,null,callback,context,subscriber);
 				},this);	
 				return;
 			};
 
-			if(!es && callback && !context){
-				keys = Stubs.SU.keys(this.events);
-				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,null,callback,null);
-				},this);	
-				return;
-			};
-			
-			if(!es && callback && context){
-				keys = Stubs.SU.keys(this.events);
-				Stubs.SU.onEach(keys,function(e,i,b){
-					this._unEvent(e,null,callback,context);
-				},this);	
-				return;
-			};
-
-		 	this._withMultiple(es,callback,context,false);
+		 	this._withMultiple(es,callback,context,subscriber,false);
 			return;
 		
       },
@@ -767,19 +724,20 @@
     
 
      emit: function(event){
+    
         if(!event){ return; }
         
         var keys = event.split(event_split),
             args = [].splice.call(arguments,1);
          
-        if(event == "all"){
+        if(event === "all"){
             this._withFire(this.withKey("all","all",true),args);
             return;
         };
 
          this._withFire(this.withKey("all","all",false),args);
 
-			if(keys.length == 1){ 
+			if(keys.length === 1){ 
 				if(keys[0].match(eventnms)){
 					keys =  keys[0].match(eventnms);
                this._withFire(this.withKey(keys[1],keys[2],true),args);
@@ -794,7 +752,7 @@
 				
 			}else{
             
-				Stubs.SU.onEach(keys,function(k,i,n){
+				Stubs.SU.forEach(keys,function(k,i,n){
 					if(k.match(eventnms)){
 						var ev = k.match(eventnms);
                   this._withFire(this.withKey(ev[1],ev[2],true),args);
@@ -812,6 +770,7 @@
      }
       
    };
+
    //the stub create function to create new classes with specific className,
    //ability(just a bunch of functions and attributes you want it to have),
    //and can specific a parent to inherit from 
@@ -819,11 +778,14 @@
    //that allow you to specify static properties that the Stub object should have
    //and the instance only properties
    //basic js object to be created and returned with abilitys
+   //{params classname} the name for the object,allows classification
+   //{params ability} the object containing functions to include in the objects,this can take an option static and instance object within it for more flexibility between instance and object level methods
+  //{params parent} an object to inherit from,a non instantiated object
+  //{params noEvent} to specify if you prefer to not include Stub.Events,is option,requires a true value
 
    Stubs.create = function(classname,ability,parent){
       
       var Stub = function(){
-         
          if(!(this instanceof arguments.callee)){
             return new arguments.callee;
          }
@@ -831,8 +793,10 @@
       
       
       if(parent){ Stubs.inherit(Stub,parent)};
-      
-      Stubs.SU.extends(Stub.prototype,Stubs.prototype,Stubs.Events);
+
+      if(Stubs.useEvents){
+	      Stubs.SU.extends(Stub.prototype,Stubs.prototype,Stubs.Events);	
+		}
       
       
       if(ability){
@@ -856,12 +820,12 @@
          if(Stub.parent){
             Stub.parent.constructor.apply(this,arguments);
             this.super = Stub.parent;
-            if(this.super.init && typeof this.super.init == 'function'){
+            if(this.super.init && typeof this.super.init === 'function'){
                this.super.init.apply(this,arguments);
             }		
          }
         
-         if(this.init && typeof this.init == 'function'){
+         if(this.init && typeof this.init === 'function'){
             this.init.apply(this,arguments);
          }
          
@@ -878,7 +842,7 @@
       return Stubs.create(name,ability,this);
    };
 
-   //desired to reduce size of object being created by stubs,removing and modularizing common functions but having to deal with extra namespace call when in need of this specific functions,if there is the desire to use this from objects directly,simple use Stubs.share to grant capability to object,prefer simple grant each instead of onEach,but its left to personal taste.
+   //desired to reduce size of object being created by stubs,removing and modularizing common functions but having to deal with extra namespace call when in need of this specific functions,if there is the desire to use this from objects directly,simple use Stubs.share to grant capability to object,prefer simple grant each instead of forEach,but its left to personal taste.
 
    //its very ,very,reddiculously fast to copy attributes and functions between prototypes
    //just specific properties that should exists in instance level
@@ -911,10 +875,10 @@
              a.events = Stubs.SU.clone(this.events,{});
              a.data = Stubs.SU.clone(this.data,{});
 
-             var elist = arguments.length == 2 ? arguments[1] : [].splice.call(arguments,1);
+             var elist = arguments.length === 2 ? arguments[1] : [].splice.call(arguments,1);
 
              if(elist === "all") { 
-                Stubs.SU.onEach(Stubs.SU.keys(this.data),function(e,i,b){
+                Stubs.SU.forEach(Stubs.SU.keys(this.data),function(e,i,b){
                   this.on(e+":change",function(){
                       a.set(e,this.get(e));
                   });
@@ -923,7 +887,7 @@
              
              if(Stubs.SU.isArray(elist) && elist.length > 0 ){ 
                 var keys = Stubs.SU.keys(this.data);
-                Stubs.SU.onEach(elist,function(e,i,b){
+                Stubs.SU.forEach(elist,function(e,i,b){
                   if(Stubs.SU.contains(keys,e)){
                      this.on(e+":change",function(){
                          a.set(e,this.get(e));
@@ -969,7 +933,7 @@
                this._addDefaultAtomEvents(attr);
             }
             var item = this._retrieve(attr); item.value = value;
-            if(item.value != item.oldvalue){
+            if(item.value !== item.oldvalue){
                this.emit(attr+":change");
                if(item.hasOnce){ this.emit(attr+":once"); this.off(attr+":once"); item.hasOnce = false;}
                item.oldvalue = item.value;
@@ -982,7 +946,7 @@
                   return;
                }
 
-               Stubs.SU.onEach(attr, function(e,i,b){
+               Stubs.SU.forEach(attr, function(e,i,b){
                   this._withSet(i,e);
                },this);
                return;
@@ -1000,7 +964,7 @@
 
          destroy: function(withMutants){
             var keys = Stubs.SU.keys(this.data);
-            Stubs.SU.onEach(keys,function(e,i,b){
+            Stubs.SU.forEach(keys,function(e,i,b){
                this.emit(e+":destroy");
             },this);
 
@@ -1024,12 +988,12 @@
          if(Stubs.parent){
             Stubs.parent.constructor.apply(this,arguments);
             this.super = Stubs.parent;
-            if(this.super.init && typeof this.super.init == 'function'){
+            if(this.super.init && typeof this.super.init === 'function'){
                this.super.init.apply(this,arguments);
             }
          }
          
-         if(this.init && typeof this.init == 'function'){
+         if(this.init && typeof this.init === 'function'){
             this.init.apply(this,arguments);
          }
          
