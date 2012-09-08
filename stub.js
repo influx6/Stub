@@ -84,7 +84,7 @@
    Stubs.SU = {
 
        makeArray: function(){
-         return ([].splice.call(arguments));
+         return ([].splice.call(arguments,0));
        },
        
        forString : function(i,value){
