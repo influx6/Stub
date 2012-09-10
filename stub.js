@@ -82,7 +82,47 @@
         */
       
    Stubs.SU = {
-  
+ 
+      //use to match objects to objects/arrays to arrays to ensure values are equal to each other,
+      //useStrict when set to true,ensures the size of properties of both
+      //objects are the same
+      matchEquality: function(a,b,beStrict){
+         var state,i;
+         if(beStrict){
+            if(this.isObject(a) && this.isObject(b)){
+               if(beStrict) (alen !== this.keys(b).length) ? return false : null;
+               for(i in a){
+                  if((i in b) && b[i] !== a[i])){
+                     state = false;
+                     break;
+                  }
+               }
+               state = true;
+            }
+            if(this.isArray(a) && this.isArray(b)){
+               var alen = a.length;
+               if(beStrict) (alen !== (b).length) ? return false : null;
+               for(i = 0; i < alen; i++){
+                  if(a[i] !== b[i]){
+                     state = false;
+                     break;
+                  }
+               }
+               state = true;
+            }
+         }
+
+
+         return state;
+      },
+
+      memoizedFunction : function(fn){
+         return function(){
+            var _selfCache = {};
+
+         };
+      },
+
       createChainable: function(fn){
          return function(){
             fn.apply(this,arguments);
@@ -1005,15 +1045,42 @@
  //filtering through results for better use,will be taking over Stubs.events
  //workload,leaving a simple Stubs.events shell with simpler implementation
    Stubs.Callbacks = (function(){
-      var   list = [],
-            argStack = [],
-            fired = false,
-            firing = false,
-            fireIndex = 0,
-            fireStart = 0,
-            fireLength = list.length,
-      return {};
-   })();
+
+      var flagsCache = {};
+
+      var makeFlags = function(flags){
+         if(flagsCache[flags]) return flagsCache[flags];
+
+         var object = flagsCache[flags] = {};
+         su.forEach(flags.split(/\s+/),function(e){
+               object[e] = true;
+         });
+
+         return;
+      };
+
+      var callback = function(flags){
+         var   list = [],
+               argStack = [],
+               fired = false,
+               firing = false,
+               fireIndex = 0,
+               fireStart = 0,
+               fireLength = list.length,
+               flags = flags.split(/\s+/),
+               
+
+               return {
+                  
+               };
+      };
+
+      return {
+         init : function(){
+            return callback.apply(this,arguments);
+         }
+      };
+   });
 
    Stubs.Promise = (function(){
    
