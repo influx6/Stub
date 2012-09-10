@@ -34,7 +34,7 @@
    };
 
    //the current in use version of Stub
-   Stubs.version = "0.3.1";
+   Stubs.version = "0.3.2";
 
    //config option to decide if stub that are created are to have the
    //Stub.Events available as part of their prototype or not
@@ -82,6 +82,22 @@
         */
       
    Stubs.SU = {
+  
+      createChainable: function(fn){
+         return function(){
+            fn.apply(this,arguments);
+            return this;
+         }
+      },
+
+      //simple function to generate random numbers of 4 lengths
+       genRandomNumber: function () { 
+          var val = (1 + (Math.random() * (30000)) | 3); 
+          if(!(val >= 10000)){
+              val += (10000 * Math.floor(Math.random * 9));
+          } 
+          return val;
+      },
 
        makeArray: function(){
          return ([].splice.call(arguments,0));
@@ -100,7 +116,7 @@
       },
 
       makeString : function(split){
-         var split = split || " ",
+         var split = split || "",
          args = this.makeArray.apply(null,arguments);
          return args.splice(1,args.length).join(split);
       },
@@ -293,7 +309,6 @@
       },
       
       forEach: function(obj,callback,scope){
-         
           if('length' in obj || this.isArray(obj) || this.matchType(obj,"string")){
             for(var i=0; i < obj.length; i++){
                callback.call(scope,obj[i],i,obj);
@@ -301,7 +316,7 @@
             return;
           }
 
-          if(this.matchType(obj,'object') || typeof obj === "object"){
+          if(this.isObject(obj)){
             for(var e in obj){
                callback.call(scope,obj[e],e,obj);
             }
@@ -610,12 +625,11 @@
         //the true firing operation on all events located within the specific
         //event array
      _withFire: function(o,args){
-
             var keys,fire = function(array){
-               if(array.length == 0) return;
+               if(array.length === 0) return;
                Stubs.SU.forEach(array,function(e,i,b){
                   if(!Stubs.SU.isObject(e) || !e.fn || !Stubs.SU.isFunction(e.fn)) return;
-                  e.fn.apply(e.context ? e.context : this,args);
+                  e.fn.apply(e.context ? e.context : ({}),args);
                },this);
                return;
             }
@@ -741,13 +755,14 @@
 				if(keys[0].match(eventnms)){
 					keys =  keys[0].match(eventnms);
                this._withFire(this.withKey(keys[1],keys[2],true),args);
-               this._withFire(this.withKey(keys[1],"all",true),args);
+               if(keys[1] !== "all"){
+                  this._withFire(this.withKey(keys[1],"all",true),args);
+               }
 					return;
 				}
 				
 				keys = keys[0];
             this._withFire(this.withKey(keys,null,true),args);
-            this._withFire(this.withKey(keys,"all",true),args);
 				return;
 				
 			}else{
@@ -756,12 +771,13 @@
 					if(k.match(eventnms)){
 						var ev = k.match(eventnms);
                   this._withFire(this.withKey(ev[1],ev[2],true),args);
-                  this._withFire(this.withKey(ev[1],"all",true),args);
+                  if(ev[2] !== "all"){
+                     this._withFire(this.withKey(ev[1],"all",true),args);
+                  }
 						return;
 					}
             
                this._withFire(this.withKey(k,null,true),args);
-               this._withFire(this.withKey(k,"all",true),args);
 					return;
 				},this);
 			};
@@ -982,6 +998,63 @@
          };
    })();
 
+
+ //added September 10th 2012 - 7:58am
+ //idea picked up from jquery source -- best idea ,very useful for a proper
+ //callback api ,these gots small improvements in the nature of more custom
+ //filtering through results for better use,will be taking over Stubs.events
+ //workload,leaving a simple Stubs.events shell with simpler implementation
+   Stubs.Callbacks = (function(){
+      var   list = [],
+            argStack = [],
+            fired = false,
+            firing = false,
+            fireIndex = 0,
+            fireStart = 0,
+            fireLength = list.length,
+      return {};
+   })();
+
+   Stubs.Promise = (function(){
+   
+      var promise = function(){
+         this._failure = [];
+         this._done = [];
+         this._always = [];
+      },
+      su = Stubs.SU;
+
+      var fn = promise.prototype;
+
+      fn.done = su.createChainable(function(fn){
+         
+      });
+
+      fn.fail = su.createChainable(function(fn){
+      
+      });
+
+      fn.always = su.createChainable(function(fn){
+      
+      });
+
+      fn.resolve = function(){};
+
+      fn.reject = function(){};
+
+      fn.state = function(){};
+
+      fn.then = function(done,failed,always){
+         
+      };
+
+      fn.pipe = function(){};
+
+      return {
+          deferred: function(){}
+      }
+   })();
+
    Stubs.prototype = {
 
       setup : function(){
@@ -1041,7 +1114,6 @@
 	// that is mainly for handling events on changes on attributes,like getting and setting 
 	// an attribute which will fire their own events,very good when desiring a finegrain
 	//control on attributes with in an object such as Models attributes in the MVC pattern
-	
   
 
 }).call(this);
