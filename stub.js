@@ -6,7 +6,6 @@
    //of code
 
    var root = this;
-   
 
    var previousStubs = root.Stubs;
    var event_split = /\s+/;
@@ -23,7 +22,7 @@
    var Stubs;
 
    if(root.exports !== undefined){
-      Stubs = exports;
+      root.exports = Stubs;
    }else{
       Stubs = root.Stubs = function(){};
    }
@@ -83,43 +82,63 @@
       
    Stubs.SU = {
  
-      //use to match objects to objects/arrays to arrays to ensure values are equal to each other,
+      //use to match arrays to arrays to ensure values are equal to each other,
       //useStrict when set to true,ensures the size of properties of both
-      //objects are the same
-      matchEquality: function(a,b,beStrict){
-         var state,i;
-         if(beStrict){
-            if(this.isObject(a) && this.isObject(b)){
-               if(beStrict) (alen !== this.keys(b).length) ? return false : null;
-               for(i in a){
-                  if((i in b) && b[i] !== a[i])){
-                     state = false;
-                     break;
-                  }
-               }
-               state = true;
+      //arrays are the same
+      matchArrays: function(a,b,beStrict){
+         if(this.isArray(a) && this.isArray(b)){
+            var alen = a.length, i = 0;
+            if(beStrict){
+               if(alen !== (b).length){ return false; }
             }
-            if(this.isArray(a) && this.isArray(b)){
-               var alen = a.length;
-               if(beStrict) (alen !== (b).length) ? return false : null;
-               for(i = 0; i < alen; i++){
-                  if(a[i] !== b[i]){
-                     state = false;
-                     break;
-                  }
+
+            for(; i < alen; i++){
+               if(a[i] === undefined || b[i] === undefined) break;
+               if(b[i] !== a[i]){
+                  return false;
+                  break;
                }
-               state = true;
             }
+            return true;
          }
+      },
 
+      //alternative when matching objects to objects,beStrict criteria here is
+      //to check if the object to be matched and the object to use to match
+      //have the same properties
+      matchObjects: function(a,b,beStrict){
+         if(this.isObject(a) && this.isObject(b)){
 
-         return state;
+            var alen = this.keys(a).length, i;
+            for(i in a){
+               if(beStrict){
+                  if(!(i in b)){
+                     return false;
+                     break;
+                  }
+               }
+               if((i in b)){
+                  if(b[i] !== a[i]){
+                     return false;
+                     break;
+                  }
+               }
+            }
+            return true;
+         }
       },
 
       memoizedFunction : function(fn){
+         var _selfCache = {},self = this;
          return function(){
-            var _selfCache = {};
-
+            var memory = self.clone(arguments,[]),
+                args = ([].splice.call(arguments,0)).join(",");
+            if(!_selfCache[args]){
+               var result = fn.apply(this,memory);
+               _selfCache[args] = result;
+               return result;
+            }
+            return _selfCache[args];
          };
       },
 
@@ -127,6 +146,21 @@
          return function(){
             fn.apply(this,arguments);
             return this;
+         }
+      },
+
+      //takes a single supplied value and turns it into an array,if its an
+      //object returns an array containing two subarrays of keys and values in
+      //the return array,if a single variable,simple wraps it in an array,
+      arranize: function(args){
+         if(this.isObject(args)){
+            return [this.keys(args),this.values(args)];
+         }
+         if(this.isArgument(args)){
+             return [].splice.call(args,0);
+         }
+         if(!this.isArray(args) && !this.isObject(args)){
+            return [args];
          }
       },
 
@@ -153,6 +187,21 @@
          }
 
          return message;
+      },
+
+      isEmpty: function(o){
+         if(this.isString(o)){
+            if(o.length === 0) return true;
+            if(o.match(/^\W+$/)) return true;
+         }
+         if(this.isArray(o)){
+            if(o.length === 0){ return true; }
+         }
+         if(this.isObject(o)){
+            if(this.keys(o).length === 0){ return true; }
+         }
+
+         return false;
       },
 
       makeString : function(split){
@@ -253,11 +302,31 @@
       // },
      
       // returns the position of the first item that meets the value in an array
-      any: function(o,value){
-         if(!this.isArray(o)) return;
+      any: function(o,value,fn){
+         if(this.isArray(o)){
+            return this._anyArray(o,value,fn);
+         }
+         if(this.isObject(o)){
+            return this._anyObject(o,value,fn);
+         }
+      },
+
+      _anyArray: function(o,value,fn){
          for(var i=0,len = o.length; i < len; i++){
             if(value === o[i]){
-               return i;
+               if(fn) fn.call(this,o[i],i,o);
+               return true;
+               break;
+            }
+         }
+         return false;
+      },
+
+      _anyObject: function(o,value,fn){
+         for(var i in o){
+            if(value === i){
+               if(fn) fn.call(this,o[i],i,o);
+               return true;
                break;
             }
          }
@@ -266,14 +335,12 @@
 
       //mainly works wth arrays only
       //flattens an array that contains multiple arrays into a single array
-      flatten: function(arrays){
-         var flat = [];
+      flatten: function(arrays,result){
+         var flat = result || [];
          this.forEach(arrays,function(a){
 
             if(this.isArray(a)){
-               this.forEach(a,function(e){
-                  flat.push(e);
-               },this);
+               flatten(a,flat);
             }else{
                flat.push(a);
             }
@@ -283,13 +350,14 @@
          return flat;
       },
 
-      filter: function(array,fn,scope){
+      filter: function(array,fn,scope,breaker){
+         if(!array) return false;
          var result=[],scope = scope || this;
          this.forEach(array,function(e,i,b){
            if(fn.call(scope,e,i,b)){
               result.push(e);
            }
-         },scope);
+         },scope,breaker);
          return result;
       },
 
@@ -348,29 +416,48 @@
          return (prop === value) ? true : false;
       },
       
-      forEach: function(obj,callback,scope){
-          if('length' in obj || this.isArray(obj) || this.matchType(obj,"string")){
+      //forEach: Improved forEach allows abit more interesting control of that
+      //allows breaker the loop in its state by passing an addition function
+      //which must return true based on the condition specified within it,it
+      //recieves the same arguments as the main callback,but very good for
+      //handler errors or breaking from the loop for specific reasons
+      //{params obj} - the object to be looped through
+      //{params callback} - the callback function
+      //{params scope} - the optional object to be to call the callback from,that is the
+      //callbacks context
+      //{params breakerFunc} - the optional function to return true to initiate breaking
+      //the loop
+      forEach: function(obj,callback,scope,breakerfunc){
+          if(!obj || !callback) return false;
+          if(('length' in obj && !this.isFunction(obj)) || this.isArray(obj) || this.isString(obj)){
             for(var i=0; i < obj.length; i++){
-               callback.call(scope,obj[i],i,obj);
+               callback.call(scope || this,obj[i],i,obj);
+               if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))){
+                  break;
+               }
             }
-            return;
+            return true;
           }
 
-          if(this.isObject(obj)){
+          if(this.isObject(obj) || this.isFunction(obj)){
             for(var e in obj){
-               callback.call(scope,obj[e],e,obj);
+               callback.call(scope || this,obj[e],e,obj);
+               if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))){
+                  break;
+               }
             }
-            return;
+            return true;
           }
       },
       
-      map: function(obj,callback,scope){
+      map: function(obj,callback,scope,breaker){
+         if(!object || !callback) return false;
           var result = [];
          
          Stubs.SU.forEach(obj,function(o,i,b){
             var r = callback.call(scope,o,i,b);
             if(r) result.push(r);
-         },scope);
+         },scope || this,breaker);
          return result;
       },
 
@@ -379,9 +466,13 @@
      //initialize a vairable for the to simple pass a {} or [] to the to arguments
      //it will be returned once finished eg var b = clone(a,{}); or b=clone(a,[]);
 
-     clone: function(from,to){
-           this.forEach(from,function(e,i,b){
+     clone: function(from,type){
+            var to = null;
+            if(this.isArray(from)) to = [];
+            if(this.isObject(from)) to = {};
+            if(type) to = type;
 
+           this.forEach(from,function(e,i,b){
                 if(this.isArray(e)){
                      if(!to[i]) to[i] = [];
                      this.clone(e,to[i]);
@@ -425,33 +516,90 @@
       isFunction: function(o){
          return (this.matchType(o,"function") && (typeof o == "function"));
       },
+
+      isUndefined: function(o){
+         return (o === undefined && this.matchType(o,'undefined'));
+      },
+
+      isNull: function(o){
+         return (o === null && this.matchType(o,'null'));
+      },
       
       isNumber: function(o){
          return this.matchType(o,"number");
       },
-      has: function(obj,property,callback){
-         var state = false;
-         
-         if(!obj){ obj = this; }
-         
-         state = (property in obj);
-         
-         if(state){ 
-            if(callback){
-               callback.call(this);
-            } 
-         }
-         
+
+      isArgument: function(o){
+         return this.matchType(o,"arguments");
+      },
+
+      has: function(obj,elem,value){
+         var self = this,state = false;
+         this.any(obj,elem,function(e,i){
+            if(value){
+               state = (e === value) ? true : false;
+               return;
+            }
+            state = true;
+         });
+
          return state;
       },
 
+      hasOwn: function(obj,elem,value){
+         if(Object.hasOwnProperty){
+            //return Object.hasOwnProperty.call(obj,elem);
+         }
 
-      proxy: function(scope,fn){
+         var keys,constroKeys,protoKeys,state = false,fn = function(e,i){
+            if(value){
+               state = (e === value) ? true : false;
+               return;
+            }
+            state = true;
+         };
+
+         if(!this.isFunction(obj)){
+            /* when dealing pure instance objects(already instantiated
+             * functions when the new keyword was used,all object literals
+             * we only will be checking the object itself since its points to
+             * its prototype against its constructors.prototype
+             * constroKeys = this.keys(obj.constructor);
+             */
+
+            keys = this.keys(obj);
+            //ensures we are not dealing with same object re-referening,if
+            //so,switch to constructor.constructor call to get real parent
+            protoKeys = this.keys(
+               ((obj === obj.constructor.prototype) ? obj.constructor.constructor.prototype : obj.constructor.prototype)
+            );
+
+            if(this.any(keys,elem,(value ? fn : null)) && !this.any(protoKeys,elem,(value ? fn : null))) 
+            return state;
+         }
+         
+         /* when dealing with functions we are only going to be checking the
+         * object itself vs the objects.constructor ,where the
+         * objects.constructor points to its parent if there was any
+         */ 
+         //protoKeys = this.keys(obj.prototype);
+         keys = this.keys(obj);
+         constroKeys = this.keys(obj.constructor);
+
+         if(this.any(keys,elem) && !this.any(constroKeys,elem)) 
+         return state;
+      },
+
+      proxy: function(fn,scope){
+         scope = scope || this;
          return function(){
             return fn.apply(scope,arguments);
          };
       },
       
+      //allows you to do mass assignment into an array or array-like object
+      //({}),the first argument is the object to insert into and the rest are
+      //the values to be inserted
       pusher: function(){
 			var slice = [].splice.call(arguments,0),
 			focus = slice[0],rem  = slice.splice(1,slice.length);
@@ -460,7 +608,6 @@
 				_pusher.call(focus,e);
 			});
 		    return;
-			
        },
 
 	 keys: function(o,a){
@@ -1046,33 +1193,99 @@
  //workload,leaving a simple Stubs.events shell with simpler implementation
    Stubs.Callbacks = (function(){
 
-      var flagsCache = {};
+      var flagsCache = {},
+         su = Stubs.SU,
+         makeFlags = function(flags){
+            if(!flags || su.isEmpty(flags)) return;
+            if(flagsCache[flags]) return flagsCache[flags];
 
-      var makeFlags = function(flags){
-         if(flagsCache[flags]) return flagsCache[flags];
+            var object = flagsCache[flags] = {};
+            su.forEach(flags.split(/\s+/),function(e){
+                  object[e] = true;
+            });
 
-         var object = flagsCache[flags] = {};
-         su.forEach(flags.split(/\s+/),function(e){
-               object[e] = true;
-         });
+            return object;
+         },
+         callbackTemplate = function(fn,context,subscriber){
+            return {
+               fn:fn,
+               context: context || this,
+               subscriber: subscriber 
+            }
+         },
+        callback = function(flags){
+             var  list = [],
+                  stack = [],
+                  fired = false,
+                  firing = false,
+                  fired = false,
+                  fireIndex = 0,
+                  fireStart = 0,
+                  fireLength = 0,
+                  flags = makeFlags(flags),
+                  memory,
 
-         return;
-      };
+                  _add = function(args){
+                     su.forEach(args,function(e,i){
+                        if(su.isArray(e)) _add(e);
+                        if(su.isObject(e)){
+                           if(!e.fn || (e.fn && !su.isFunction(e.fn))){ return;}
+                           if(!su.isNull(e.context) && !su.isUndefined(e.context) && !su.isObject(e.context)){ return; }
+                           if(flags.unique && instance.has('fn',e.fn)){ return; }
+                           list.push(e);
+                        }
+                     });
+                  },
 
-      var callback = function(flags){
-         var   list = [],
-               argStack = [],
-               fired = false,
-               firing = false,
-               fireIndex = 0,
-               fireStart = 0,
-               fireLength = list.length,
-               flags = flags.split(/\s+/),
-               
+                  _fire = function(context,args){
+                     if(flags.once && fired) return;
+                     if(!fired){
+                        su.forEach(list,function(e,i,b){
+                        
+                        });
+                     }
+                  },
 
-               return {
-                  
-               };
+                  instance =  {
+                     
+                     add: function(){
+                        if(list){
+                           fireLength = list.length;
+                           if(arguments.length === 1){
+                              if(su.isArray(arguments[0])) _add(arguments[0]);
+                              if(su.isObject(arguments[0])) _add([arguments[0]]);
+                           }else{
+                              _add([
+                                    callbackTemplate(arguments[0],arguments[1],arguments[2])
+                              ]);
+                           }
+                        };
+                     },
+
+                     remove: function(){},
+
+                     lock: function(){},
+
+                     disable: function(){},
+
+                     _display: function(){
+                        if(list) return list;
+                     },
+
+                     has: function(elem,value){
+                       var len = list.length;
+                       for(var i = 0; i < len; i++){
+                           if(su.has(list[i],elem,value)){
+                                 return true;
+                                 break;
+                           }
+                       }
+                           return false;
+                     },
+
+                  };
+
+             return instance;
       };
 
       return {
@@ -1080,7 +1293,7 @@
             return callback.apply(this,arguments);
          }
       };
-   });
+   })();
 
    Stubs.Promise = (function(){
    
@@ -1154,13 +1367,6 @@
             callback.call(self,self[e],index,self);
             index +=1;
           }
-      },
-      
-
-      hasOwn: function(property,callback){
-         return (
-            (property in this) && Stubs.SU.is(this.constructor.prototype[property],undefined)
-         );
       },
       
       proxy: function(fn){
