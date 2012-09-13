@@ -362,9 +362,9 @@
       },
 
       occurs: function(o,value){
-         var occurence = 0;
+         var occurence = [];
          this.forEach(o,function(e,i,b){
-               if(e === value) occurence += 1; 
+               if(e === value){ occurence.push(i); }
          },this);
          return occurence;
       },
@@ -533,14 +533,21 @@
          return this.matchType(o,"arguments");
       },
 
-      has: function(obj,elem,value){
+      has: function(obj,elem,value,fn){
          var self = this,state = false;
          this.any(obj,elem,function(e,i){
             if(value){
-               state = (e === value) ? true : false;
+               if(e === value){
+                  state = true;
+                  if(fn && self.isFunction(fn)) fn.call(e,i,obj);
+                  return;
+               }
+               state = false;
                return;
             }
+
             state = true;
+            if(fn && self.isFunction(fn)) fn.call(e,i,obj);
          });
 
          return state;
@@ -586,7 +593,7 @@
          keys = this.keys(obj);
          constroKeys = this.keys(obj.constructor);
 
-         if(this.any(keys,elem) && !this.any(constroKeys,elem)) 
+         if(this.any(keys,elem,(value ? fn : null)) && !this.any(constroKeys,elem,(value ? fn : null))) 
          return state;
       },
 
@@ -631,12 +638,12 @@
 	},
 	
 	//normalizes an array,ensures theres no undefined or empty spaces between arrays
-	normArray: function(a){
+	normalizeArray: function(a){
 		if(!a || !this.isArray(a)) return; 
 		
 		var start = 0, len = a.length;
 		for(var i=start;i < len; i++){
-			if(a[i] != undefined){
+			if(!this.isUndefined(a[i])){
 				a[start]=a[i];
 				start += 1;
 			}
@@ -1209,9 +1216,23 @@
          callbackTemplate = function(fn,context,subscriber){
             return {
                fn:fn,
-               context: context || this,
+               context: context,
                subscriber: subscriber 
             }
+         },
+         occursObjArray = function(arr,elem,value,fn){
+            var oc = [];
+            su.forEach(arr,function(e,i,b){
+               if(e){
+                  if((elem in e) && (e[elem] === value)){
+                    oc.push(i);
+                    if(fn && su.isFunction(fn)) fn.call(null,e,i,arr);
+                  }
+               }
+            },this);
+
+            return oc;
+            
          },
         callback = function(flags){
              var  list = [],
@@ -1237,20 +1258,28 @@
                      });
                   },
 
-                  _fire = function(context,args){
+                  _fire = function(args,context){
                      if(flags.once && fired) return;
-                     if(!fired){
-                        su.forEach(list,function(e,i,b){
-                        
-                        });
+                     firing = true;
+                     fired = true;
+                     fireIndex = fireStart || 0;
+                     for(;fireIndex < fireLength; fireIndex){
+                        if(!list[fireIndex].fn) return;
+                        if(list[fireIndex].fn.apply(context || e.context,args) === false && flags.stopOnFalse){
+                           break;
+                        }
                      }
+                     firing = false;
+                     return;
                   },
 
                   instance =  {
                      
                      add: function(){
                         if(list){
-                           fireLength = list.length;
+                           // if(firing){
+                           //    fireStart = list.length;
+                           // }
                            if(arguments.length === 1){
                               if(su.isArray(arguments[0])) _add(arguments[0]);
                               if(su.isObject(arguments[0])) _add([arguments[0]]);
@@ -1259,22 +1288,84 @@
                                     callbackTemplate(arguments[0],arguments[1],arguments[2])
                               ]);
                            }
+
+                           fireLength = list.length;
                         };
                      },
 
-                     remove: function(){},
+                     remove: function(fn,context,subscriber){
+                        // if(firing){
+                        // 
+                        // }
+                        if(fn){
+                           this.occurs('fn',fn,function(e,i,b){
+                              if(context && subscriber && (e.subscriber === subscriber) && (e.context === context)){
+                                 delete b[i];
+                                 su.normalizeArray(b);
+                                 return;
+                              }
+                              if(context && (e.context === context)){
+                                 delete b[i];
+                                 su.normalizeArray(b);
+                                 return;
+                              }
+                              if(subscriber && (e.subscriber === subscriber)){
+                                 delete b[i];
+                                 su.normalizeArray(b);
+                                 return;
+                              }
+
+                              delete b[i];
+                              su.normalizeArray(b);
+                              return;
+                           });
+                           return;
+                        }
+
+                        if(context){
+                           this.occurs('context',context,function(e,i,b){
+                              if(subscriber && (e.subscriber === subscriber)){
+                                 delete b[i];
+                                 su.normalizeArray(b);
+                                 return;
+                              }
+
+                              delete b[i];
+                              su.normalizeArray(b);
+                              return;
+
+                           });
+                           return;
+                        }
+
+                        if(subscriber){
+                           this.occurs('subscriber',subscriber,function(e,i,b){
+                              if(context && (e.context === context)){
+                                 delete b[i];
+                                 su.normalizeArray(b);
+                                 return;
+                              }
+
+                              delete b[i];
+                              su.normalizeArray(b);
+                              return;
+                           });
+                           return;
+                        }
+
+                     },
 
                      lock: function(){},
 
                      disable: function(){},
 
-                     _display: function(){
+                     show: function(){
                         if(list) return list;
                      },
 
                      has: function(elem,value){
-                       var len = list.length;
-                       for(var i = 0; i < len; i++){
+                       var i=0,len = list.length;
+                       for(; i < len; i++){
                            if(su.has(list[i],elem,value)){
                                  return true;
                                  break;
@@ -1282,6 +1373,10 @@
                        }
                            return false;
                      },
+
+                     occurs: function(elem,value,fn){
+                        return occursObjArray.call(this,list,elem,value,fn);
+                     }
 
                   };
 
