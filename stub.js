@@ -177,6 +177,10 @@
          return ([].splice.call(arguments,0));
        },
 
+       makeSplice: function(arr,from,to){
+         return ([].splice.call(arr,from,to));
+       },
+
       //for string just iterates a single as specificed in the first arguments 
        forString : function(i,value){
          if(!value) return;
@@ -367,6 +371,22 @@
                if(e === value){ occurence.push(i); }
          },this);
          return occurence;
+      },
+
+      every: function(o,value,fn){
+         this.forEach(o,function(e,i,b){
+               if(e === value){ 
+                  if(fn) fn.call(this,e,i,b);
+               }
+         },this);
+         return;
+      },
+
+      delay: function(fn,duration){
+         var args = this.makeSplice(arguments,2);
+         return setTimeout(function(){
+            fn.apply(this,args)
+         },duration);
       },
 
       splice: function(o,start,end){
@@ -1236,7 +1256,6 @@
          },
         callback = function(flags){
              var  list = [],
-                  stack = [],
                   fired = false,
                   firing = false,
                   fired = false,
@@ -1244,8 +1263,12 @@
                   fireStart = 0,
                   fireLength = 0,
                   flags = makeFlags(flags),
-                  memory,
 
+                  _fixList = function(){
+                     if(!firing){
+                        su.normalizeArray(list);
+                     }
+                  },
                   _add = function(args){
                      su.forEach(args,function(e,i){
                         if(su.isArray(e)) _add(e);
@@ -1258,15 +1281,16 @@
                      });
                   },
 
-                  _fire = function(args,context){
+                  _fire = function(context,args){
                      if(flags.once && fired) return;
                      firing = true;
                      fired = true;
                      fireIndex = fireStart || 0;
-                     for(;fireIndex < fireLength; fireIndex){
-                        if(!list[fireIndex].fn) return;
-                        if(list[fireIndex].fn.apply(context || e.context,args) === false && flags.stopOnFalse){
-                           break;
+                     for(;fireIndex < fireLength; fireIndex++){
+                        if(!su.isUndefined(list[fireIndex]) && !su.isNull(list[fireIndex])){
+                           var e = list[fireIndex];
+                           if(!e.fn) return;
+                           e.fn.apply(e.context || context,args);
                         }
                      }
                      firing = false;
@@ -1277,9 +1301,6 @@
                      
                      add: function(){
                         if(list){
-                           // if(firing){
-                           //    fireStart = list.length;
-                           // }
                            if(arguments.length === 1){
                               if(su.isArray(arguments[0])) _add(arguments[0]);
                               if(su.isObject(arguments[0])) _add([arguments[0]]);
@@ -1291,12 +1312,22 @@
 
                            fireLength = list.length;
                         };
+                        return this;
+                     },
+
+                     fireWith: function(context,args){
+                        if(!firing){
+                           _fire(context,args);
+                        }
+                        return this;
+                     },
+
+                     fire: function(){
+                        this.fireWith(this,arguments);
+                        return this;
                      },
 
                      remove: function(fn,context,subscriber){
-                        // if(firing){
-                        // 
-                        // }
                         if(fn){
                            this.occurs('fn',fn,function(e,i,b){
                               if(context && subscriber && (e.subscriber === subscriber) && (e.context === context)){
@@ -1319,7 +1350,7 @@
                               su.normalizeArray(b);
                               return;
                            });
-                           return;
+                           return this;
                         }
 
                         if(context){
@@ -1335,7 +1366,7 @@
                               return;
 
                            });
-                           return;
+                           return this;
                         }
 
                         if(subscriber){
@@ -1350,14 +1381,23 @@
                               su.normalizeArray(b);
                               return;
                            });
-                           return;
+                           return this;
                         }
 
                      },
 
-                     lock: function(){},
+                     flush: function(){
+                        su.explode(list);
+                     },
 
-                     disable: function(){},
+                     disable: function(){
+                        list = undefined;
+                        
+                     },
+
+                     disabled: function(){
+                        return !list;
+                     },
 
                      show: function(){
                         if(list) return list;
@@ -1376,6 +1416,10 @@
 
                      occurs: function(elem,value,fn){
                         return occursObjArray.call(this,list,elem,value,fn);
+                     },
+
+                     fired: function(){
+                        return !!fired;
                      }
 
                   };
