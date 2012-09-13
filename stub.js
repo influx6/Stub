@@ -1218,6 +1218,11 @@
  //callback api ,these gots small improvements in the nature of more custom
  //filtering through results for better use,will be taking over Stubs.events
  //workload,leaving a simple Stubs.events shell with simpler implementation
+ //
+ //   - FLAGS 
+ //         : once => only fires the callback once 
+ //         : unique => ensures there are no duplicate numbers
+ //
    Stubs.Callbacks = (function(){
 
       var flagsCache = {},
