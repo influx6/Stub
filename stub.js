@@ -253,6 +253,39 @@
             return;
          },
 
+         iterable: function(collection,eachfunc,finish){
+            if(!collection || !eachfunc) return;
+            //handles management of next call for collection,be it arrays or objects
+            var len,keys,self = this,isArray = false;
+            if(this.isObject(collection)){ keys = this.keys(collection); len = keys.length; }
+            if(this.isArray(collection)){ isArray = true; len = collection.length;}
+
+            eachfunc.collection = collection;
+            eachfunc.size = len;
+            eachfunc.pos = 0;
+            eachfunc.finish = finish;
+            eachfunc.item = null;
+            eachfunc.next = function(){
+               var item,key;
+               if(!isArray) key = keys[eachfunc.pos]; item = eachfunc.collection[key];
+               if(isArray) key = eachfunc.pos; item = eachfunc.collection[key];
+
+               if(eachfunc.pos >= eachfunc.size){
+                  if(eachfunc.finish) eachfunc.finish(eachfunc.item,key,eachfunc.collection);
+                  return false;
+               }
+   
+               eachfunc.pos++;
+               if(!item) return false;
+               
+               eachfunc.item = item;
+               eachfunc(item,key,eachfunc.collection);
+               return item;
+            };
+            
+            return eachfunc;
+         }, 
+
          extends:function(){
             var obj = arguments[0];
             var args = Array.prototype.splice.call(arguments,1,arguments.length);
@@ -582,6 +615,11 @@
          
          isFunction: function(o){
             return (this.matchType(o,"function") && (typeof o == "function"));
+         },
+
+         isPrimitive: function(o){
+            if(!this.isObject(o) && !this.isFunction(o) && !this.isArray(o) && !this.isUndefined(o) && !this.isNull(o)) return true;
+            return false;
          },
 
          isUndefined: function(o){
@@ -1095,6 +1133,19 @@
          
          var s = Stubs,
          su = s.SU,
+         isPromise = function(e){
+              //jquery style,check if it has a promise function
+              //adding extra check for type of promise and if return type matches objects
+              if("promise" in e){
+                  //adding a tiny extra bit of check if its a stub promise,which has a signature
+                  //set to promise string
+                  if(e.__signature__ && e.__signature__ === "promise") return true;
+                  //usual checks
+                  if(e["promise"] && su.isFunction(e["promise"]) && su.isObject(e["promise"]())) return true;
+              }
+
+                 return false;
+         },
          promise = function(fn){
 
             var state = "pending",lists = {
@@ -1103,10 +1154,14 @@
                always : s.Callbacks.create("forceContext")
             },
             deferred = {},
+            _promise = {},
             memory,
-            handler = fn;
+            handler;
+
 
             su.extends(deferred, {
+
+                  __signature__: "promise",
 
                   isRejected: function(){
                      if(state === "rejected" && lists.fail.fired()){
@@ -1127,6 +1182,7 @@
                   },
 
                   done: function(fn){
+                     if(!fn) return this;
                      if(this.isResolved()){
                         su.forEach(su.arranize(arguments),function(e,i){
                            if(!su.isFunction(e)) return;
@@ -1139,6 +1195,7 @@
                   },
 
                   fail: function(fn){
+                     if(!fn) return this;
                      if(this.isRejected()){
                         su.forEach(su.arranize(arguments),function(e,i){
                            if(!su.isFunction(e)) return;
@@ -1151,6 +1208,7 @@
                   },
 
                   always: function(fn){
+                     if(!fn) return this;
                      if(this.isRejected() || this.isResolved()){
                         su.forEach(su.arranize(arguments),function(e,i){
                            if(!su.isFunction(e)) return;
@@ -1194,6 +1252,17 @@
 
                   when: function(deffereds){
                      //returns a new defferd/promise
+                     var whens = su.arranize(arguments),
+                         count = whens.length,
+                         newDiferred = Stubs.Promise.create();
+
+                     su.eachNext(whens,function(e,i){
+                        
+                     },function(){
+                     
+                     });
+
+                     return newDiferred;
                   },
 
                   resolveWith: function(ctx,args){
@@ -1224,6 +1293,19 @@
                      return this;
                   },
 
+                  notifyWith: function(ctx,args){
+                    if(this.isRejected() || this.isResolved()()) return this;
+
+                    memory = [ctx,args];
+                    lists.always.fireWith(ctx,args);
+                    return this;
+                  },
+
+                  notify: function(){
+                     this.notifyWith(this,arguments);
+                     return this;
+                  },
+
                   resolve: function(){
                      this.resolveWith(this,arguments);
                   },
@@ -1239,23 +1321,52 @@
                   },
 
                   promise: function(){
-                     var _promise = {};
-                     su.extends(_promise,this);
-                     delete _promise.resolve;
-                     delete _promise.reject;
-                     delete _promise.rejectWith;
-                     delete _promise.resolveWith;
+                     var _p = _promise;
+                     su.extends(_p,this);
+                     delete _p.resolve;
+                     delete _p.reject;
+                     delete _p.rejectWith;
+                     delete _p.resolveWith;
 
-                     return _promise;
+                     return _p;
                   }
 
             });
+
+           
+
+            if(fn){
+               if(su.isObject(fn) && this.isPromise(fn)){
+                  handler = fn.promise;
+                  fn.then(
+                     function(){ deferred.resolve(arguments); },
+                     function(){ deferred.reject(arguments); },
+                     function(){ deferred.notify(arguments); }
+                  );
+                  return deferred;
+               }
+
+               if(su.isFunction(fn)){ handler = fn.call(deferred,deferred); return; }
+
+               if(su.isObject(fn) && !this.isPromise(fn)){
+                  handler = fn;
+                  deferred.resolve(fn);
+                  return deferred;
+               }
+
+               if(su.isPrimitive(o)){
+                  handler = { value: fn};
+                  deferred.resolve(fn);
+                  return deferred;
+               }
+            }
 
             return deferred;
          };
 
          return {
-             create: promise
+             create: promise,
+             isPromise: isPromise
          }
       })();
 
@@ -1284,13 +1395,7 @@
       },
 
       each: function(callback){
-          var self = this;
-         var index = 0;
-         
-          for(var e in self){
-            callback.call(self,self[e],index,self);
-            index +=1;
-          }
+         return Stubs.SU.forEach(this,callback);
       },
       
       proxy: function(fn){
