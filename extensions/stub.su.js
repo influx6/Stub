@@ -1,16 +1,17 @@
 //first check if we are in Nodejs
-var root = this;
-if(root.module !== undefined && root.process !== undefined){
-   var EM = require("extensionmgr.js").ExtensionManager,
-   Stubs = require("stub").Stubs;
-}
+var root = this,EM,Stubs;
+//if(module !== undefined || process !== undefined){
+   EM = require("extensionmgr.js").ExtensionManager || ExtensionManager;
+   Stubs = require("stub").Stubs || Stubs;
+//}
 
 EM(Stubs).create("SU",{
          //meta_data
           name:"Stubs.Utilities",
           description: "a set of common,well used functions for the everyday developer,with cross-browser shims",
-          lisence:{ type:"mit"},
+          license:{ type:"mit"},
           author: "Alexander Adeniyi Ewetumo",
+          version: "0.3.0",
          //use to match arrays to arrays to ensure values are equal to each other,
          //useStrict when set to true,ensures the size of properties of both
          //arrays are the same
@@ -676,4 +677,4 @@ EM(Stubs).create("SU",{
          return a;
       }
       
-},null,false);
+},null,true);

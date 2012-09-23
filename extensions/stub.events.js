@@ -1,4 +1,7 @@
-Stubs.EM.create("Events",{
+var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
+Stubs = (require("stub").Stubs || Stubs);
+
+EM(Stubs).create("Events",{
    	  name: "Stubs.Events",
       version: "1.0.0",
       description: "Publication-Subscription implementation using Callback API",
@@ -45,4 +48,4 @@ Stubs.EM.create("Events",{
         return this;
      }
    
-},["Callbacks"],false);
+},["Callbacks"],true);

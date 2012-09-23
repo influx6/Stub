@@ -1,4 +1,7 @@
-    //added September 10th 2012 - 7:58am
+var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
+Stubs = (require("stub").Stubs || Stubs);
+
+//added September 10th 2012 - 7:58am
     //idea picked up from jquery source -- best idea ,very useful for a proper
     //callback api ,these gots small improvements in the nature of more custom
     //filtering through results for better use,will be taking over Stubs.events
@@ -10,7 +13,8 @@
     //         : forceContext => ensures that only supplied context from the fire
     //         function or set to this will be used to fire the Callbacks
     //
-Stubs.EM.create("Callbacks",function(){
+
+EM(Stubs).create("Callbacks",function(){
 
    var flagsCache = {},
       su = Stubs.SU,
@@ -243,9 +247,14 @@ Stubs.EM.create("Callbacks",function(){
    };
 
    return {
-      create : callback
+      create : callback,
+	  name:"Stubs.Callbacks",
+      description: "Callback API with the pub-sub pattern implementation(the heart of Promise and Events)",
+      license:{ type:"mit"},
+      author: "Alexander Adeniyi Ewetumo",
+      version: "0.3.0",
    };
-})();
 
-Stubs.EM.create("Callbacks",Callbacks,["SU"],false);
+},["SU"],true);
+
 

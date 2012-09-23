@@ -1,9 +1,13 @@
+var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
+Stubs = (require("stub").Stubs || Stubs);
+
+
 //promise is a state based execution object ,which performs specific calls
 //depending on the result of its target or caller,you wrapp promises or call
 //them from within a object and call them properties depending on its
 //outcome
 
-Stubs.EM.create("Promise",function(SU){
+EM(Stubs).create("Promise",function(SU){
    var su = SU,
        isPromise = function(e){
         //jquery style,check if it has a promise function
@@ -281,5 +285,5 @@ Stubs.EM.create("Promise",function(SU){
          return promise;
       },
    }
-},["SU"],false);
+},["SU"],true);
 

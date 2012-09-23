@@ -27,7 +27,7 @@
          Stubs = root.Stubs = function(){};
       }
 
-      Stubs.__name__ = "Stubs";
+      Stubs.ObjectClassName = "Stubs";
 
       Stubs.noConflict = function(){
         root.Stubs = previousStubs;
