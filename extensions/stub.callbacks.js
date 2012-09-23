@@ -1,5 +1,4 @@
-var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
-Stubs = (require("stub").Stubs || Stubs);
+var EM = require("extensionmgr.js").ExtensionManager || EM;
 
 //added September 10th 2012 - 7:58am
     //idea picked up from jquery source -- best idea ,very useful for a proper
@@ -14,7 +13,7 @@ Stubs = (require("stub").Stubs || Stubs);
     //         function or set to this will be used to fire the Callbacks
     //
 
-EM(Stubs).create("Callbacks",function(){
+EM().create("Callbacks",function(){
 
    var flagsCache = {},
       su = Stubs.SU,

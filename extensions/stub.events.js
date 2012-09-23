@@ -1,7 +1,6 @@
-var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
-Stubs = (require("stub").Stubs || Stubs);
+var EM = require("extensionmgr.js").ExtensionManager || EM;
 
-EM(Stubs).create("Events",{
+EM().create("Events",{
    	  name: "Stubs.Events",
       version: "1.0.0",
       description: "Publication-Subscription implementation using Callback API",
@@ -37,8 +36,7 @@ EM(Stubs).create("Events",{
      emit: function(event){
         if(!event || !this.events){ return this; }
         
-        var keys = event.split(event_split),
-            args = Stubs.SU.makeSplice(arguments,1),
+        var args = Stubs.SU.makeSplice(arguments,1),
             e = this.events[event];
 
         if(!e) return this;

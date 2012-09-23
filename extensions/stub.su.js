@@ -1,11 +1,12 @@
 //first check if we are in Nodejs
-var root = this,EM,Stubs;
+var root = this,EM;
 //if(module !== undefined || process !== undefined){
-   EM = require("extensionmgr.js").ExtensionManager || ExtensionManager;
-   Stubs = require("stub").Stubs || Stubs;
+   EM = EM || require("extensionmgr.js").ExtensionManager();
+   module.exports.EM = EM;
+
 //}
 
-EM(Stubs).create("SU",{
+EM().create("SU",{
          //meta_data
           name:"Stubs.Utilities",
           description: "a set of common,well used functions for the everyday developer,with cross-browser shims",

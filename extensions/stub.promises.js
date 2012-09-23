@@ -1,5 +1,5 @@
-var EM = (require("extensionmgr.js").ExtensionManager || ExtensionManager),
-Stubs = (require("stub").Stubs || Stubs);
+module.exports.EM = require("extensionmgr.js").ExtensionManager || EM;
+module.exports.Stubs = require("stub").Stubs || Stubs;
 
 
 //promise is a state based execution object ,which performs specific calls
