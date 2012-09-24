@@ -7,15 +7,15 @@
 # Features
 	- produces simple,lightweight Objects capable of extending down their tree
 	- compatible with Nodejs
-	- easily extended directly or through an ExtensionManager(https://github.com/influx6/ExtensionManager.js)
+	- easily extendable directly or through an ExtensionManager(https://github.com/influx6/ExtensionManager.js)
 	- comes with predefined,usable extensions(Callbacks,Events,Promise,Utility extensions).
 	
 # Extensions
 	- stub.callbacks: An extension that provides a standard callback api for evented/pub-sub 
-		event triggering mechanisms with flags of added functionality
+		event triggering mechanisms with flags for added functionality
 	- stub.events: An extension which uses stub.callbacks to provide a standard Pub-Sub pattern
 		with the off,on and emit call styles.
-	- stub.promises: A standard Promise A spec promise extension.
+	- stub.promises: A standard Promise A spec.
 	- stub.su: a standard utility belt extension with about 58 shims on standard and non-standard
 		functions.
 		
@@ -34,9 +34,10 @@
 			});
 			
 			/* to use available extensions(Promise,Events,Utility,etc)
-			* copy and add extensions in the same format in a folder to access them through,
+			* copy or add your extensions in the same format and style as the defaults
+			* in a folder to access them through,
 			* default extensions for stub,eg Promises are located in the extensions folder,
-			* when using extension order is important,also ensure to define explicity when
+			* when using extension order is important,also ensure to define explicity, when
 			* creating your extensions that you state all dependencies directly access by the extension
 			*  you can add them onto your class or to stub,or let the extension manager handle them and
 			* simple call them from the extension manager
@@ -81,6 +82,14 @@
 																
 					Promise(exts); Callbacks(exts); Events(exts); SU(exts);
 					 //Library will now have all these extensions
+					
+					or 
+					
+					var exts = ExtensionManager(); // returns an extensionmanager object,set to extend 
+					Promise(exts); Callbacks(exts); Events(exts); SU(exts);
+					
+					exts.give(false,Library,"Callback","Promise");
+					
 						
 				</script>
 			 
