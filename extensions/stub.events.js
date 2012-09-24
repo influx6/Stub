@@ -10,7 +10,7 @@ var Events = (function(EM){
            if(!this.events) this.events = {};
             if(!es || !callback){ return; }
 
-            var e = this.events[es] = (this.events[es] ? this.events[es] : Stubs.Callbacks.create("unique"));
+            var e = this.events[es] = (this.events[es] ? this.events[es] : this.depends.Callbacks.create("unique"));
             e.add(callback,context,subscriber);
 
             return;
@@ -35,7 +35,7 @@ var Events = (function(EM){
         emit: function(event){
            if(!event || !this.events){ return this; }
            
-           var args = Stubs.SU.makeSplice(arguments,1),
+           var args = this.depends.SU.makeSplice(arguments,1),
                e = this.events[event];
 
            if(!e) return this;
@@ -45,7 +45,7 @@ var Events = (function(EM){
            return this;
         }
       
-   },["Callbacks"],true);
+   },["Callbacks","SU"],true);
 });
 
 if(module.exports) module.exports = Events;

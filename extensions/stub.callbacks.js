@@ -13,10 +13,10 @@ var Callbacks = (function(EM){
        //         function or set to this will be used to fire the Callbacks
        //
 
-   EM.create("Callbacks",function(){
+   EM.create("Callbacks",function(SU){
 
       var flagsCache = {},
-         su = Stubs.SU,
+         su = SU,
          makeFlags = function(flags){
             if(!flags || su.isEmpty(flags)) return;
             if(flagsCache[flags]) return flagsCache[flags];

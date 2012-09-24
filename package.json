@@ -1,7 +1,7 @@
 {
 	"name": "stub",
 	
-	"version":"0.3.1",
+	"version":"0.3.2",
 	
 	"author":"Alex Ewetumo",
 	
@@ -29,6 +29,15 @@
 		"type": "mit", 
   		"url": "http://mths.be/mit"
 	},
+	
+	"dependencies":{
+		"extensionmgr": ">= 0.1.0"
+	},
+	
+	"dev-dependencies":{
+		"jsconcat": ">= 0.0.1",
+		"extensionmgr": ">= 0.1.0"
+	}
     
 	
 }

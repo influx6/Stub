@@ -287,4 +287,4 @@ var Promise = (function(EM){
 
 });
 
-if(module.exports) modules.exports = Promise;
+if(module.exports) module.exports = Promise;
