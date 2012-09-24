@@ -25,4 +25,10 @@
 		"node":">= 0.4.0"
 	}
 	
+	"icenses":{ 
+		"type": "mit", 
+  		"url": "http://mths.be/mit"
+	},
+    
+	
 }
