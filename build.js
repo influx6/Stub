@@ -8,7 +8,7 @@ var jsconcat = require("jsconcat").compile,
 		src_dir: ".",
 		src:["../extensionmgr/extensionmgr.js"],
 		build_dir: ".",
-		uglify: true
+		uglify: false
 	},
 	
 	stub = {
@@ -18,6 +18,8 @@ var jsconcat = require("jsconcat").compile,
 		build_dir: ".",
 		uglify: true
 	};
+	
+
 
    jsconcat(stub);
    jsconcat(extmgr);

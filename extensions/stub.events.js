@@ -1,5 +1,8 @@
 var Events = (function(EM){
-   EM.create("Events",{
+   EM.create("Events", function(SU,Callbacks){
+
+		return {
+			
          name: "Stubs.Events",
          version: "1.0.0",
          description: "Publication-Subscription implementation using Callback API",
@@ -10,7 +13,7 @@ var Events = (function(EM){
            if(!this.events) this.events = {};
             if(!es || !callback){ return; }
 
-            var e = this.events[es] = (this.events[es] ? this.events[es] : this.depends.Callbacks.create("unique"));
+            var e = this.events[es] = (this.events[es] ? this.events[es] : Callbacks.create("unique"));
             e.add(callback,context,subscriber);
 
             return;
@@ -35,7 +38,7 @@ var Events = (function(EM){
         emit: function(event){
            if(!event || !this.events){ return this; }
            
-           var args = this.depends.SU.makeSplice(arguments,1),
+           var args = SU.makeSplice(arguments,1),
                e = this.events[event];
 
            if(!e) return this;
@@ -45,7 +48,9 @@ var Events = (function(EM){
            return this;
         }
       
-   },["Callbacks","SU"],true);
+   };
+
+	},["Callbacks","SU"],true);
 });
 
 if(module.exports) module.exports = Events;
