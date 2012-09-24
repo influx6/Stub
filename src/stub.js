@@ -7,10 +7,6 @@
       var root = r;
 
       var previousStubs = root.Stubs;
-      var event_split = /\s+/;
-      var eventnms = /^([a-zA-Z0-9-_]+):([a-zA-Z0-9-_]+)/;
-      var wrd_match = /^\w+/;
-
 
       //create local copy common methods
       var _pusher = Array.prototype.push;
@@ -39,7 +35,7 @@
 
       //config option to decide if stub that are created are to have the
       //Stub.Events available as part of their prototype or not
-      Stubs.useEvents = true;
+     // Stubs.useEvents = true;
 
       //this class level method handles classic-type inheritance,ensure to use it before
       //assigning any properties to the child prototype,incase of using the stub class without
@@ -157,9 +153,9 @@
          
          if(parent){ Stubs.inherit(Stub,parent)};
 
-         if(Stubs.useEvents){
-            Stubs.SU.extends(Stub.prototype,Stubs.prototype,Stubs.Events);	
-         }
+         //if(Stubs.useEvents){
+           // Stubs.SU.extends(Stub.prototype,Stubs.prototype,Stubs.Events);	
+        // }
          
          
          if(ability){
