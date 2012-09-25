@@ -44,18 +44,21 @@
 			*/
 			
 			//to add directly to stub ,look to ExtensionManager ReadMe for more detailed information
-		    //require('./extensions/stub.su')(extmgr(stub));
+			
+		    //require('stub/extensions/stub.su')(extmgr(stub));
+			//the reason we are using stub/extensions in the require above,is because the directories have being listed
+			//in stub package.json file,therefore we can gain access to that directory through this format.
 			
 			//to add directly to Library
-			//require('./extensions/stub.su')(extmgr(Library));
+			//require('stub/extensions/stub.su')(extmgr(Library));
 			
 			//to let extmgr handle all extensions,don't pass any argument,when calling extmgr
-			//require('./extensions/stub.su')(extmgr()); //extmgr will have a cache of the loaded extensions
+			//require('stub/extensions/stub.su')(extmgr()); //extmgr will have a cache of the loaded extensions
 			
-			require('./extensions/stub.su')(extmgr());			
-			require('./extensions/stub.callbacks')(extmgr(Library));
-			require('./extensions/stub.events')(extmgr(Library));
-			require('./extensions/stub.promise')(extmgr(Library));
+			require('stub/extensions/stub.su')(extmgr());			
+			require('stub/extensions/stub.callbacks')(extmgr(Library));
+			require('stub/extensions/stub.events')(extmgr(Library));
+			require('stub/extensions/stub.promise')(extmgr(Library));
 			
 			Library.Callbacks //=> will return the callback object
 			Library.Promie //=> will return the promise object and so on.
