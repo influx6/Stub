@@ -197,11 +197,6 @@ var Promise = (function(EM){
         
 
          if(fn){
-            if(su.isNull(fn) || su.isUndefined(fn)){
-               deffered.reject();
-               return deffered;
-            }
-
             if(su.isObject(fn) && this.isPromise(fn)){
                handler = fn.promise;
                fn.then(
@@ -228,6 +223,10 @@ var Promise = (function(EM){
                deferred.resolve(fn);
                return deferred;
             }
+
+         }else{
+            deferred.reject();
+            return deferred;
          }
 
          return deferred;
@@ -272,13 +271,13 @@ var Promise = (function(EM){
 
                  },function(e,i){
                      var args = su.flatten(resValues);
-                     console.log(args);
                      if(!procCount){ newDiffered.resolveWith(newDiffered,args);}
                      else{ newDiffered.resolveWith(newDiffered,lists); }
                  });
 
-                while(!(--count <= -1)){
+                while(!(count <= -1)){
                   iterator.next();
+                  count--;
                 }
 
             return promise;
