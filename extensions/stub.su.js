@@ -207,7 +207,7 @@ var SU = (function(EM){
 		           var obj = arguments[0];
 		           var args = Array.prototype.splice.call(arguments,1,arguments.length);
 
-		           Stubs.SU.forEach(args,function(o,i,b){
+		           this.forEach(args,function(o,i,b){
 		              if(o  !== undefined && typeof o == "object"){
 		                 for(var prop in o){
 		                       var g = o.__lookupGetter__(prop), s = o.__lookupSetter__(prop);
@@ -447,21 +447,19 @@ var SU = (function(EM){
 		        forEach: function(obj,callback,scope,breakerfunc){
 		            if(!obj || !callback) return false;
 		            if(('length' in obj && !this.isFunction(obj)) || this.isArray(obj) || this.isString(obj)){
-		              for(var i=0; i < obj.length; i++){
+                    var len = obj.length; i=0;
+		              for(; i < len; i++){
 		                 callback.call(scope || this,obj[i],i,obj);
-		                 if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))){
-		                    break;
-		                 }
+		                 if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))) break;
 		              }
 		              return true;
 		            }
 
 		            if(this.isObject(obj) || this.isFunction(obj)){
+                    var counter = 0;
 		              for(var e in obj){
 		                 callback.call(scope || this,obj[e],e,obj);
-		                 if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))){
-		                    break;
-		                 }
+		                 if(breakerfunc && (breakerfunc.call(scope,obj[i],i,obj))) break;
 		              }
 		              return true;
 		            }
@@ -471,7 +469,7 @@ var SU = (function(EM){
 		           if(!object || !callback) return false;
 		            var result = [];
 
-		           Stubs.SU.forEach(obj,function(o,i,b){
+		           this.forEach(obj,function(o,i,b){
 		              var r = callback.call(scope,o,i,b);
 		              if(r) result.push(r);
 		           },scope || this,breaker);
@@ -529,6 +527,10 @@ var SU = (function(EM){
 		        isArray: function(o){
 		           return this.matchType(o,"array");
 		        },
+
+              isDate: function(o){
+                return this.matchType(o,"date");
+              },
 
 		        isFunction: function(o){
 		           return (this.matchType(o,"function") && (typeof o == "function"));
@@ -641,7 +643,7 @@ var SU = (function(EM){
 
 		      keys: function(o,a){
 		        var keys = a || [];
-		        Stubs.SU.forEach(o,function(e,i,b){
+		        this.forEach(o,function(e,i,b){
 		           keys.push(i);
 		        });
 		        return keys;
@@ -649,7 +651,7 @@ var SU = (function(EM){
 
 		      values: function(o,a){
 		        var keys = a || [];
-		        Stubs.SU.forEach(o,function(e,i,b){
+		        this.forEach(o,function(e,i,b){
 		           keys.push(e);
 		        });
 		        return keys;
