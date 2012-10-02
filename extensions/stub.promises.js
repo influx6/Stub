@@ -5,8 +5,9 @@ var Promise = (function(EM){
    //them from within a object and call them properties depending on its
    //outcome
 
-   EM.create("Promise",function(SU){
+   EM.create("Promise",function(SU,CU){
       var su = SU,
+          callbacks = CU,
           isPromise = function(e){
            //jquery style,check if it has a promise function
            //adding extra check for type of promise and if return type matches objects
@@ -23,9 +24,9 @@ var Promise = (function(EM){
       promise = function(fn){
 
          var state = "pending",lists = {
-            done : s.Callbacks.create("once forceContext"),
-            fail : s.Callbacks.create("once forceContext"),
-            always : s.Callbacks.create("forceContext")
+            done : callbacks.create("once forceContext"),
+            fail : callbacks.create("once forceContext"),
+            always : callbacks.create("forceContext")
          },
          deferred = {},
          _promise = {},
@@ -243,16 +244,17 @@ var Promise = (function(EM){
          when: function(deffereds){
             //returns a new defferd/promise
             var lists = su.normalizeArray(arguments.length === 1 ? [deffereds] : su.arranize(arguments)),
+                self = this,
                 count = lists.length,
                 procCount = count,
                 resValues = new Array(count),
-                newDiffered = Stubs.Promise.create(),
+                newDiffered = self.create(),
                 promise = newDiffered.promise(),
                 iterator = su.iterable(lists,function(e,i){
                      //will notify the objects in all the deffereds recieved
-                     if(isPromise(e)) return;
+                     var item;
+                     (isPromise(e)) ? item = e.promise() : item = self.create(e).promise();
 
-                     var item = e.promise();
                      if(item){
                         item.then(function(){
                            //waiting thoughts;
@@ -261,7 +263,7 @@ var Promise = (function(EM){
                         },function(){
                            //set here cause we can call notify as manytimes
                            //as possible
-                           resValues[i] = su.arranize(arguments);
+                           resValues[i] = arguments.length === 1 ? arguments[0] : su.arranize(arguments);
                         });
 
                         procCount--;
@@ -275,15 +277,14 @@ var Promise = (function(EM){
                      else{ newDiffered.resolveWith(newDiffered,lists); }
                  });
 
-                while(!(count <= -1)){
+                while(!(--count <= -1)){
                   iterator.next();
-                  count--;
                 }
 
             return promise;
          },
       }
-   },["SU"],true);
+   },["SU","Callbacks"],true);
 
 });
 
